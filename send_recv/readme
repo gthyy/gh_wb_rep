@@ -1,0 +1,22 @@
+
+Linux网络编程——多播
+
+http://blog.csdn.net/tennysonsky/article/details/44493407
+
+查询相关资料得到的答案如下：
+It means that the tool is trying to use multicast but the network interface doesn't support it There are two likely causes:
+·Your machine doesn't have multicast support enabled. For example, on Linux and FreeBSD it is possible to compile a kernel which doesn't support multicast.  
+·You don't have a route for multicast traffic. Some systems don't add this by default, and you need to run：
+route add -net 224.0.0.0 netmask 255.255.255.255 eth0(or similar). If you wish to use RAT in unicast mode only, it is possible to add the multicast route on the loopback interface.
+
+这主要和当前的网络配置有关，因为多播IP地址没有加入到路由表中。
+
+解决方法：把需要用到的多播地址(如本例的224.0.0.88)加入到路由表中，命令如下：
+sudo route add -net 224.0.0.88 netmask 255.255.255.255 eth0
+224.0.0.88：为当前使用的多播IP地址
+eth0：为当前使用的有效网卡
+
+其它辅助命令：
+sudo route del -net 224.0.0.88 netmask 255.255.255.255 eth0 //把224.0.0.88从路由表中删除
+route -n //查看路由表信息
+

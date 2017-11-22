@@ -1,0 +1,1216 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!-- saved from url=(0057)http://blog.csdn.net/tennysonsky/article/details/44493407 -->
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">          
+            <link rel="canonical" href="http://blog.csdn.net/tennysonsky/article/details/44493407"> 
+
+   
+
+  
+ <meta http-equiv="Cache-Control" content="no-siteapp"><link rel="alternate" media="handheld" href="http://blog.csdn.net/tennysonsky/article/details/44493407#">
+
+    <meta name="shenma-site-verification" content="5a59773ab8077d4a62bf469ab966a63b_1497598848"> 
+       
+    <title>Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike || 麦克
+        - CSDN博客</title>
+    
+    <meta name="description" content="单播用于两个主机之间的端对端通信，广播用于一个主机对整个局域网上所有主机上的数据通信。单播和广播是两个极端，要么对一个主机进行通信，要么对整个局域网上的主机进行通信。实际情况下，经常需要对一组特定的主机进行通信，而不是整个局域网上的所有主机，这就是多播的用途。IP 多播（也称多址广播或组播）技术，是一种允许一台或多台主机（多播源）发送单一数据包到多台主机（一次的，同时的）的 TCP/IP 网络技术。多播地址就类似于 QQ 群号，多播组相当于 QQ 群，一个个的主机就相当于群里面的成员。多播作为一点对多">
+
+    <meta name="keywords" content="网络编程,多播,socket">
+
+   
+    <script src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/hm.js"></script><script src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/blog_static_head.min.js" type="text/javascript"></script>
+
+    
+        <!--new top-->
+       
+       
+        <!--new top-->
+    
+      <!-- ad begin -->
+         
+    <!-- ad end-->
+
+    <link rel="Stylesheet" type="text/css" href="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/style.css">
+
+    
+
+    <link id="RSSLink" title="RSS" type="application/rss+xml" rel="alternate" href="http://blog.csdn.net/tennysonsky/rss/list">
+    <link rel="shortcut icon" href="http://c.csdnimg.cn/public/favicon.ico">
+    <link type="text/css" rel="stylesheet" href="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/default.css">
+ 
+
+
+
+    <link href="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/csdn_public_blog_detail.min.css" type="text/css" rel="stylesheet">
+     
+         <link rel="stylesheet" href="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/csdn_blog_detail.min.css">
+
+  
+
+
+    <!-- 请置于所有广告位代码之前 --> 
+            <script src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/ds.js"></script>
+
+<script src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/share.js"></script><script src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/wxLogin.js"></script><link type="text/css" rel="stylesheet" href="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/style(1).css"><script src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/logger.js"></script><link href="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/bdsstyle.css" rel="stylesheet" type="text/css"><link rel="stylesheet" type="text/css" href="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/style(2).css"><style type="text/css">.MathJax_Hover_Frame {border-radius: .25em; -webkit-border-radius: .25em; -moz-border-radius: .25em; -khtml-border-radius: .25em; box-shadow: 0px 0px 15px #83A; -webkit-box-shadow: 0px 0px 15px #83A; -moz-box-shadow: 0px 0px 15px #83A; -khtml-box-shadow: 0px 0px 15px #83A; border: 1px solid #A6D ! important; display: inline-block; position: absolute}
+.MathJax_Hover_Arrow {position: absolute; width: 15px; height: 11px; cursor: pointer}
+</style><style type="text/css">#MathJax_About {position: fixed; left: 50%; width: auto; text-align: center; border: 3px outset; padding: 1em 2em; background-color: #DDDDDD; color: black; cursor: default; font-family: message-box; font-size: 120%; font-style: normal; text-indent: 0; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; z-index: 201; border-radius: 15px; -webkit-border-radius: 15px; -moz-border-radius: 15px; -khtml-border-radius: 15px; box-shadow: 0px 10px 20px #808080; -webkit-box-shadow: 0px 10px 20px #808080; -moz-box-shadow: 0px 10px 20px #808080; -khtml-box-shadow: 0px 10px 20px #808080; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true')}
+.MathJax_Menu {position: absolute; background-color: white; color: black; width: auto; padding: 2px; border: 1px solid #CCCCCC; margin: 0; cursor: default; font: menu; text-align: left; text-indent: 0; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; z-index: 201; box-shadow: 0px 10px 20px #808080; -webkit-box-shadow: 0px 10px 20px #808080; -moz-box-shadow: 0px 10px 20px #808080; -khtml-box-shadow: 0px 10px 20px #808080; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true')}
+.MathJax_MenuItem {padding: 2px 2em; background: transparent}
+.MathJax_MenuArrow {position: absolute; right: .5em; color: #666666}
+.MathJax_MenuActive .MathJax_MenuArrow {color: white}
+.MathJax_MenuArrow.RTL {left: .5em; right: auto}
+.MathJax_MenuCheck {position: absolute; left: .7em}
+.MathJax_MenuCheck.RTL {right: .7em; left: auto}
+.MathJax_MenuRadioCheck {position: absolute; left: 1em}
+.MathJax_MenuRadioCheck.RTL {right: 1em; left: auto}
+.MathJax_MenuLabel {padding: 2px 2em 4px 1.33em; font-style: italic}
+.MathJax_MenuRule {border-top: 1px solid #CCCCCC; margin: 4px 1px 0px}
+.MathJax_MenuDisabled {color: GrayText}
+.MathJax_MenuActive {background-color: Highlight; color: HighlightText}
+.MathJax_Menu_Close {position: absolute; width: 31px; height: 31px; top: -15px; left: -15px}
+</style><style type="text/css">#MathJax_Zoom {position: absolute; background-color: #F0F0F0; overflow: auto; display: block; z-index: 301; padding: .5em; border: 1px solid black; margin: 0; font-weight: normal; font-style: normal; text-align: left; text-indent: 0; text-transform: none; line-height: normal; letter-spacing: normal; word-spacing: normal; word-wrap: normal; white-space: nowrap; float: none; box-shadow: 5px 5px 15px #AAAAAA; -webkit-box-shadow: 5px 5px 15px #AAAAAA; -moz-box-shadow: 5px 5px 15px #AAAAAA; -khtml-box-shadow: 5px 5px 15px #AAAAAA; filter: progid:DXImageTransform.Microsoft.dropshadow(OffX=2, OffY=2, Color='gray', Positive='true')}
+#MathJax_ZoomOverlay {position: absolute; left: 0; top: 0; z-index: 300; display: inline-block; width: 100%; height: 100%; border: 0; padding: 0; margin: 0; background-color: white; opacity: 0; filter: alpha(opacity=0)}
+#MathJax_ZoomFrame {position: relative; display: inline-block; height: 0; width: 0}
+#MathJax_ZoomEventTrap {position: absolute; left: 0; top: 0; z-index: 302; display: inline-block; border: 0; padding: 0; margin: 0; background-color: white; opacity: 0; filter: alpha(opacity=0)}
+</style><style type="text/css">.MathJax_Preview {color: #888}
+#MathJax_Message {position: fixed; left: 1em; bottom: 1.5em; background-color: #E6E6E6; border: 1px solid #959595; margin: 0px; padding: 2px 8px; z-index: 102; color: black; font-size: 80%; width: auto; white-space: nowrap}
+#MathJax_MSIE_Frame {position: absolute; top: 0; left: 0; width: 0px; z-index: 101; border: 0px; margin: 0px; padding: 0px}
+.MathJax_Error {color: #CC0000; font-style: italic}
+</style><link rel="stylesheet" href="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/share_style0_16.css"></head>
+
+
+<body><div id="MathJax_Message" style="display: none;"></div><div id="BAIDU_DUP_fp_wrapper" style="position: absolute; left: -1px; bottom: -1px; z-index: 0; width: 0px; height: 0px; overflow: hidden; visibility: hidden; display: none;"><iframe id="BAIDU_DUP_fp_iframe" src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/o.html" style="width: 0px; height: 0px; visibility: hidden; display: none;"></iframe></div><iframe frameborder="0" style="display: none;" src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/saved_resource.html"></iframe><div class="csdn-toolbar csdn-toolbar-skin-black ">        <div class="container row center-block ">          <div class="col-md-3 pull-left logo clearfix"><a href="http://www.csdn.net/?ref=toolbar" title="CSDN首页" target="_blank" class="icon"></a><a title="频道首页" href="http://blog.csdn.net/?ref=toolbar_logo" class="img blog-icon"></a></div>          <div class="pull-right login-wrap unlogin">            <ul class="btns">              <li class="loginlink"><a href="https://passport.csdn.net/account/login?ref=toolbar" target="_top">登录&nbsp;</a>|<a target="_top" href="http://passport.csdn.net/account/mobileregister?ref=toolbar&amp;action=mobileRegister">&nbsp;注册</a></li>              <li class="search">                <div class="icon on-search-icon">                  <div class="wrap">                    <div class="curr-icon-wrap">                      <div class="curr-icon"></div>                    </div>                    <form action="http://so.csdn.net/search" id="toolbar_search" method="get" target="_blank">                      <input type="hidden" value="toolbar" name="ref" accesskey="2">                      <div class="border">                        <input placeholder="搜索" type="text" value="" name="q" accesskey="2"><span class="icon-enter-sm"></span>                      </div>                    </form>                  </div>                </div>              </li>              <li class="favor">                <div class="icon on-favor-icon">                  <div class="wrap">                    <div class="curr-icon-wrap">                      <div class="curr-icon"></div>                    </div>                    <div style="display:none;" class="favor-success"><span class="msg">收藏成功</span>                      <div class="btns"><span class="btn btn-primary ok">确定</span></div>                    </div>                    <div style="display:none;" class="favor-failed"><span class="icon-danger-lg"></span><span class="msg">收藏失败，请重新收藏</span>                      <div class="btns"><span class="btn btn-primary ok">确定</span></div>                    </div>                    <form role="form" class="form-horizontal favor-form">                      <div class="form-group">                        <div class="clearfix">                          <label for="input-title" class="col-sm-2 control-label"><span class="red_txt">*</span>标题</label>                          <div class="col-sm-10">                            <input id="inputTitle" type="text" placeholder="" class="title form-control">                          </div>                        </div>                        <div class="alert alert-danger"><strong></strong>标题不能为空</div>                      </div>                      <div class="form-group" style="display:none;">                        <label for="input-url" class="col-sm-2 control-label">网址</label>                        <div class="col-sm-10">                          <input id="input-url" type="text" placeholder="" class="url form-control">                        </div>                      </div>                      <div class="form-group">                        <label for="input-tag" class="col-sm-2 tag control-label">标签</label>                        <div class="col-sm-10">                          <input id="input-tag" type="text" class="form-control tag">                        </div>                      </div>                      <div class="form-group">                        <label for="input-description" class="description col-sm-2 control-label">位置</label>                        <div class="col-sm-10">                          <div class="my_lib_box">                            个人主页&nbsp;-&nbsp;<a href="http://my.csdn.net/" target="_blank">我的知识</a>                          </div>                          <div class="checkbox">                            <div class="pull-left">                              <label>                                <input type="checkbox" name="share" class="save_lib_map" checked="checked">同时保存至：                              </label>                            </div>                            <div class="pull-left">                              <div class="dropdown">                                <button id="toolbar_sele_map" type="button">                                  选择知识图谱                                  <i class="fa fa-chevron-down"></i>                                </button>                                <div class="top_arr"></div>                                <div class="outside">                                  <ul class="dropdown-menu" id="toolbar_Design_knowledge"><li>选择知识图谱</li></ul>                                </div>                              </div>                            </div>                            <div class="pull-left new_txt">                              <a href="http://lib.csdn.net/my/create/structure" target="_blank">新建？</a>                            </div>                          </div>                        </div>                      </div>                      <div class="form-group">                        <div class="col-sm-offset-2 col-sm-10 ft">                          <div class="col-sm-4 pull-left" style="display:none">                            <div class="checkbox">                              <label>                                <input type="checkbox" name="share" checked="checked" class="share">公开                              </label>                            </div>                          </div>                          <div class="col-sm-8 pull-right favor-btns">                            <button type="button" class="cancel btn btn-default">取消</button>                            <button type="submit" class="submit btn btn-primary">收藏</button>                          </div>                        </div>                      </div>                    </form>                  </div>                </div>              </li>              <li class="notify">                <div style="display:none" class="number"></div>                <div style="display:none" class="icon-hasnotes-sm"></div>                <div id="header_notice_num"></div>                <div class="icon on-notify-icon">                  <div class="wrap">                    <div class="curr-icon-wrap">                      <div class="curr-icon"></div>                    </div>                    <div id="note1" class="csdn_note">                      <div class="box"></div>                    <iframe src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/saved_resource(1).html" frameborder="0" allowtransparency="true" style="z-index:-1;position:absolute;top:0;left:0;width:100%;height:100%;background:transparent"></iframe></div>                  </div>                </div>              </li>              <li class="ugc">                <div class="icon on-ugc-icon">                  <div class="wrap clearfix">                    <div class="curr-icon-wrap">                      <div class="curr-icon"></div>                    </div>                    <dl>                      <dt><a href="http://geek.csdn.net/news/expert?ref=toolbar" target="_blank" class="p-news clearfix" style="display:none;"><em class="icon"></em><span>分享资讯</span></a></dt>                      <dt style="border: none;"><a href="http://u.download.csdn.net/upload?ref=toolbar" target="_blank" class="p-doc clearfix"><em class="icon"></em><span>传PPT/文档</span></a></dt>                      <dt><a href="http://bbs.csdn.net/topics/new?ref=toolbar" target="_blank" class="p-ask clearfix"><em class="icon"></em><span>提问题</span></a></dt>                      <dt><a href="http://write.blog.csdn.net/postedit?ref=toolbar" target="_blank" class="p-blog clearfix"><em class="icon"></em><span>写博客</span></a></dt>                      <dt><a href="http://gitbook.cn/new/gitchat/activity?utm_source=csdnblog1" target="_blank" class="gitchat clearfix"><em class="icon"></em><span>发布Chat</span></a></dt>                      <dt><a href="http://u.download.csdn.net/upload?ref=toolbar" target="_blank" class="p-src clearfix"><em class="icon"></em><span>传资源</span></a></dt>                      <dt><a href="https://code.csdn.net/projects/new?ref=toolbar" target="_blank" class="c-obj clearfix"><em class="icon"></em><span>创建项目</span></a></dt>                      <dt><a href="https://code.csdn.net/snippets/new?ref=toolbar" target="_blank" class="c-code clearfix"><em class="icon"></em><span>创建代码片</span></a></dt>                    </dl>                  </div>                </div>              </li>              <li class="profile">                <div class="icon on-profile-icon"><img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/100x100.jpg" class="curr-icon-img">                  <div class="wrap clearfix">                    <div class="curr-icon-wrap">                      <div class="curr-icon"></div>                    </div>                    <div class="bd">                      <dl class="clearfix">                        <dt class="pull-left img"><a target="_blank" href="http://my.csdn.net/?ref=toolbar" class="avatar"><img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/100x100.jpg"></a></dt>                        <dd class="info" style="border: none;"><a target="_blank" href="http://my.csdn.net/?ref=toolbar" class="nickname"></a><a class="set-nick" href="https://passport.csdn.net/account/profile">设置昵称<span class="write-icon"></span></a><span class="dec"><a class="fill-dec" href="http://my.csdn.net/" target="_blank">编辑自我介绍，让更多人了解你<span class="write-icon"></span></a></span></dd>                      </dl>                    </div>                    <div class="ft clearfix"><a target="_blank" href="http://my.csdn.net/my/account/changepwd?ref=toolbar" class="pull-left"><span class="icon-cog"></span>帐号设置</a><a href="https://passport.csdn.net/account/logout?ref=toolbar" target="_top" class="pull-left" style="margin-left:132px; width:18px; height:27px; white-space:nowrap; overflow:hidden;"><span class="icon-signout"></span><span class="out">退出</span></a></div>                  </div>                </div>              </li>              <li class="apps">                <div id="chasnew123" class="hasnew" style="display: none;"></div>                <div id="cappsarea123" class="icon on-apps-icon">                  <div class="wrap clearfix">                    <div class="curr-icon-wrap">                      <div class="curr-icon"></div>                    </div>                  <div class="detail">                    <dl>                      <dt>                        <h5>社区</h5>                      </dt>                      <dd> <a href="http://blog.csdn.net/?ref=toolbar" target="_blank">博客</a></dd>                      <dd> <a href="http://bbs.csdn.net/?ref=toolbar" target="_blank">论坛</a></dd>                      <dd> <a href="http://download.csdn.net/?ref=toolbar" target="_blank">下载</a></dd>                      <dd> <a href="http://lib.csdn.net/?ref=toolbar" target="_blank">知识库</a></dd>                      <dd><a href="http://ask.csdn.net/?ref=toolbar" target="_blank">技术问答</a></dd>                      <dd><a href="http://geek.csdn.net/?ref=toolbar" target="_blank">极客头条</a></dd>                      <dd style="display:none"> <a href="http://hero.csdn.net/?ref=toolbar" target="_blank">英雄会</a></dd>                    </dl>                  </div>                  <div class="detail">                    <dl>                      <dt>                        <h5>服务</h5>                      </dt>                      <dd style="display:none"> <a href="http://job.csdn.net/?ref=toolbar" target="_blank">JOB<img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/new.gif" style="display: none; margin-top: -26px; width: 23px;"></a></dd>                      <dd> <a href="http://edu.csdn.net/?ref=toolbar" target="_blank">学院<img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/new.gif" style="display: none; margin-top: -26px; width: 23px;"></a></dd>                      <dd> <a href="https://code.csdn.net/?ref=toolbar" target="_blank">CODE</a></dd>                      <dd> <a href="http://huiyi.csdn.net/?ref=toolbar" target="_blank">活动</a></dd>                      <dd> <a href="http://www.csto.com/?ref=toolbar" target="_blank">CSTO</a></dd>                      <dd> <a href="http://mall.csdn.net/?ref=toolbar" target="_blank">C币兑换<img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/new.gif" style="display: none; margin-top: -26px; width: 23px;"></a></dd>                    </dl>                  </div>                  <div class="detail last">                    <dl>                      <dt>                        <h5>俱乐部</h5>                      </dt>                      <dd> <a href="http://cto.csdn.net/?ref=toolbar" target="_blank">CTO俱乐部</a></dd>                      <dd> <a href="http://student.csdn.net/?ref=toolbar" target="_blank">高校俱乐部</a></dd>                    </dl>                  </div>                </div>              </div>            </li>            </ul>          </div>        </div>    </div>
+     
+
+    <!-- 广告位开始 -->
+        
+    <!-- 广告位结束 -->
+
+    
+   
+      <!--new top-->
+    <script id="toolbar-tpl-scriptId" fixed="true" prod="blog" skin="black" src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/html.js" type="text/javascript"></script>
+     <!--new top-->
+    <div id="container">
+        <div id="header">
+    <div class="header">
+        <div id="blog_title">
+            <h2>
+                <a href="http://blog.csdn.net/tennysonsky">秋叶原 &amp;&amp; Mike || 麦克</a></h2>
+            <h3>比你优秀的人往往比你更努力！！！！</h3>
+            <div class="clear">
+            </div>
+        </div>
+        <div class="clear">
+        </div>
+        
+     
+    </div>
+</div>
+<div id="navigator">
+    <div class="navigator_bg">
+    </div>
+    <div class="navigator">
+        <ul>           
+                <li id="btnContents"><a href="http://blog.csdn.net/tennysonsky?viewmode=contents"><span onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_mulu&#39;])">
+                    <img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/ico_list.gif">目录视图</span></a></li>
+                <li id="btnView"><a href="http://blog.csdn.net/tennysonsky?viewmode=list"><span onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_zhaiyao&#39;])">
+                    <img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/ico_summary.gif">摘要视图</span></a></li>
+                <li id="btnRss"><a href="http://blog.csdn.net/tennysonsky/rss/list"><span onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_RSS&#39;])">
+                    <img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/ico_rss.gif">订阅</span></a></li>    
+                 <li id="btnChat"><a href="http://gitbook.cn/new/gitchat/activity?utm_source=csdnblog1" target="_blank"><span>
+                    <img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/icon_gitchat.png">发布Chat</span></a></li>             
+            
+
+            </ul>
+    </div>
+</div>
+<script type="text/javascript">
+    var username = "tennysonsky";
+    var _blogger = username;
+    var blog_address = "http://blog.csdn.net/tennysonsky";
+    var static_host = "http://static.blog.csdn.net";
+    var currentUserName = "";  
+</script>
+
+        <div id="body">
+            <div id="main">
+                <div class="main">
+                        <div class="ad_class">
+<div class="notice tracking-ad" data-mod="popu_3"> 
+
+
+<a href="http://blog.csdn.net/epubit17/article/details/78210459" target="_blank">
+<font color="red"><strong>异步赠书：10月Python畅销书升级</strong></font></a>
+
+&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+<a href="http://edu.csdn.net/topic/ai1?utm_source=blog4" target="_blank">
+<font color="blue"><strong>【线路图】人工智能到底学什么？！</strong></font></a>
+&nbsp;&nbsp;&nbsp;&nbsp;
+
+<a href="http://blog.csdn.net/turingbooks/article/details/78316013" target="_blank">
+<font color="blue"><strong>程序员10月书讯</strong></font></a>
+
+&nbsp;&nbsp;&nbsp;&nbsp;
+
+
+<a href="http://blog.csdn.net/broadview2006/article/details/78257196" target="_blank">
+<font color="red"><strong>每周荐书（京东篇）：618取胜之道、质量保障、技术解密）</strong></font></a>
+
+
+
+</div>                        </div>
+
+                        
+
+
+
+  
+
+
+
+
+
+
+<script type="text/javascript" src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/category.js"></script>
+
+  <script type="text/ecmascript">
+      window.quickReplyflag = true;
+      var isBole = false; 
+      var fasrc="http://my.csdn.net/my/favorite/miniadd?t=Linux%e7%bd%91%e7%bb%9c%e7%bc%96%e7%a8%8b%e2%80%94%e2%80%94%e5%a4%9a%e6%92%ad&u=http://blog.csdn.net/tennysonsky/article/details/44493407"
+    </script>
+<div id="article_details" class="details">
+    <div class="article_title">   
+         <span class="ico ico_type_Original"></span>
+
+    <h1>
+        <span class="link_title"><a href="http://blog.csdn.net/tennysonsky/article/details/44493407">
+        Linux网络编程——多播        
+           
+        </a>
+        </span>
+
+         
+    </h1>
+</div>
+
+   
+
+        <div class="article_manage clearfix">
+        <div class="article_l">
+            <span class="link_categories">
+            标签：
+              <a href="http://www.csdn.net/tag/%e7%bd%91%e7%bb%9c%e7%bc%96%e7%a8%8b" target="_blank" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_tag&#39;]);">网络编程</a><a href="http://www.csdn.net/tag/%e5%a4%9a%e6%92%ad" target="_blank" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_tag&#39;]);">多播</a><a href="http://www.csdn.net/tag/socket" target="_blank" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_tag&#39;]);">socket</a>
+            </span>
+        </div>
+        <div class="article_r">
+            <span class="link_postdate">2015-03-20 20:30</span>
+            <span class="link_view" title="阅读次数">2248人阅读</span>
+            <span class="link_comments" title="评论次数"> <a href="http://blog.csdn.net/tennysonsky/article/details/44493407#comments" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_pinglun&#39;])">评论</a>(4)</span>
+            <span class="link_collect tracking-ad" data-mod="popu_171"> <a href="javascript:void(0);" onclick="javascript:collectArticle(&#39;Linux%e7%bd%91%e7%bb%9c%e7%bc%96%e7%a8%8b%e2%80%94%e2%80%94%e5%a4%9a%e6%92%ad&#39;,&#39;44493407&#39;);return false;" title="收藏" target="_blank">收藏</a></span>
+             <span class="link_report"> <a href="http://blog.csdn.net/tennysonsky/article/details/44493407#report" onclick="javascript:report(44493407,2);return false;" title="举报">举报</a></span>
+
+        </div>
+    </div>    <style type="text/css">        
+            .embody{
+                padding:10px 10px 10px;
+                margin:0 -20px;
+                border-bottom:solid 1px #ededed;                
+            }
+            .embody_b{
+                margin:0 ;
+                padding:10px 0;
+            }
+            .embody .embody_t,.embody .embody_c{
+                display: inline-block;
+                margin-right:10px;
+            }
+            .embody_t{
+                font-size: 12px;
+                color:#999;
+            }
+            .embody_c{
+                font-size: 12px;
+            }
+            .embody_c img,.embody_c em{
+                display: inline-block;
+                vertical-align: middle;               
+            }
+             .embody_c img{               
+                width:30px;
+                height:30px;
+            }
+            .embody_c em{
+                margin: 0 20px 0 10px;
+                color:#333;
+                font-style: normal;
+            }
+    </style>
+    <script type="text/javascript">
+        $(function () {
+            try
+            {
+                var lib = eval("("+$("#lib").attr("value")+")");
+                var html = "";
+                if (lib.err == 0) {
+                    $.each(lib.data, function (i) {
+                        var obj = lib.data[i];
+                        //html += '<img src="' + obj.logo + '"/>' + obj.name + "&nbsp;&nbsp;";
+                        html += ' <a href="' + obj.url + '" target="_blank">';
+                        html += ' <img src="' + obj.logo + '">';
+                        html += ' <em><b>' + obj.name + '</b></em>';
+                        html += ' </a>';
+                    });
+                    if (html != "") {
+                        setTimeout(function () {
+                            $("#lib").html(html);                      
+                            $("#embody").show();
+                        }, 100);
+                    }
+                }      
+            } catch (err)
+            { }
+            
+        });
+    </script>
+      <div class="category clearfix">
+        <div class="category_l">
+           <img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/category_icon.jpg">
+            <span>分类：</span>
+        </div>
+        <div class="category_r">
+                    <label onclick="GetCategoryArticles(&#39;2835083&#39;,&#39;tennysonsky&#39;,&#39;top&#39;,&#39;44493407&#39;);">
+                        <span onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_fenlei&#39;]);">【Linux网络编程】<em>（46）</em></span>
+                      <img class="arrow-down" src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/arrow_triangle _down.jpg" style="display:inline;">
+                      <img class="arrow-up" src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/arrow_triangle_up.jpg" style="display:none;">
+                        <div class="subItem">
+                            <div class="subItem_t"><a href="http://blog.csdn.net/tennysonsky/article/category/2835083" target="_blank">作者同类文章</a><i class="J_close">X</i></div>
+                            <ul class="subItem_l" id="top_2835083">                            
+                            </ul>
+                        </div>
+                    </label>                    
+        </div>
+    </div>
+        <div class="bog_copyright">         
+            <p class="copyright_p">版权声明：本博客文章，大多是本人整理编写，或在网络中收集，转载请注明出处！！</p>
+        </div>
+
+  
+
+  
+  
+     
+
+
+<div style="clear:both"></div><div style="border:solid 1px #ccc; background:#eee; float:left; min-width:200px;padding:4px 10px;"><p style="text-align:right;margin:0;"><span style="float:left;">目录<a href="http://blog.csdn.net/tennysonsky/article/details/44493407#" title="系统根据文章中H1到H6标签自动生成文章目录">(?)</a></span><a href="http://blog.csdn.net/tennysonsky/article/details/44493407#" onclick="javascript:return openct(this);" title="展开">[+]</a></p><ol style="display:none;margin-left:14px;padding-left:14px;line-height:160%;"><li><a href="http://blog.csdn.net/tennysonsky/article/details/44493407#t0">概述</a></li><li><a href="http://blog.csdn.net/tennysonsky/article/details/44493407#t1">多播地址</a></li><li><a href="http://blog.csdn.net/tennysonsky/article/details/44493407#t2">多播地址与 MAC 地址的映射</a></li><li><a href="http://blog.csdn.net/tennysonsky/article/details/44493407#t3">Linux多播编程</a></li></ol></div><div style="clear:both"></div><div id="article_content" class="article_content tracking-ad" data-mod="popu_307" data-dsm="post" deep="5">
+<h1><a name="t0" target="_blank"></a><span style="font-family:SimSun; font-size:18px">概述</span></h1><p><span style="font-family:SimSun; font-size:18px">单播用于两个主机之间的端对端通信，广播用于一个主机对整个局域网上所有主机上的数据通信。单播和广播是两个极端，要么对一个主机进行通信，要么对整个局域网上的主机进行通信。实际情况下，经常需要对一组特定的主机进行通信，而不是整个局域网上的所有主机，这就是多播的用途。</span></p><p><span style="font-family:SimSun; font-size:18px"><br data-filtered="filtered"></span></p><p><span style="font-family:SimSun; font-size:18px"><span style="color:#ff0000">IP 多播（也称多址广播或组播）技术，是一种允许一台或多台主机（多播源）发送单一数据包到多台主机（一次的，同时的）的 TCP/IP 网络技术</span>。多播是 IPv6 数据包的 3 种基本目的地址类型之一，多播是一点对多点的通信,　IPv6 没有采用 IPv4 中的组播术语，而是将<span style="color:#ff0000"><strong>广播看成是多播的一个特殊例子</strong></span>。</span></p><p><span style="font-family:SimSun; font-size:18px"><br data-filtered="filtered"></span></p><p><span style="font-family:SimSun; font-size:18px"><strong><span style="color:#ff0000">多播作为一点对多点的通信，数据的收发仅仅在同一分组中进行，是节省网络带宽的有效方法之一。</span></strong>在网络应用中，当需要将一个节点的信号传送到多个节点时，无论是采用重复点对点通信方式，还是采用广播方式，都会严重浪费网络带宽，只有多播才是最好的选择。多播能使一个或多个多播源只把数据包发送给特定的多播组，而只有加入该多播组的主机才能接收到数据包。<br data-filtered="filtered"></span></p><p><span style="font-family:SimSun; font-size:18px"><br data-filtered="filtered"></span></p><p><span style="font-family:SimSun; font-size:18px">IP 多播应用大致可以分为三类:<span style="background-color:rgb(255,204,0)">点对多点应用</span>，<span style="background-color:rgb(255,204,0)">多点对点应用</span>和<span style="background-color:rgb(255,204,0)">多点对多点应用</span>。<br data-filtered="filtered"></span></p><blockquote style="margin:0 0 0 40px; border:none; padding:0px"><p><span style="font-family:SimSun; font-size:18px">1）点对多点应用是指一个发送者，多个接收者的应用形式，这是最常见的多播应用形式。<span style="color:#ff0000">典型的应用包括</span>：媒体广播、媒体推送、信息缓存、事件通知和状态监视等。</span></p></blockquote><blockquote style="margin:0 0 0 40px; border:none; padding:0px"><p><span style="font-family:SimSun; font-size:18px">2）多点对点应用是指多个发送者，一个接收者的应用形式。通常是双向请求响应应用，任何一端（多点或点）都有可能发起请求。<span style="color:#ff0000">典型应用包括</span>：资源查找、数据收集、网络竞拍、信息询问等。</span></p></blockquote><blockquote style="margin:0 0 0 40px; border:none; padding:0px"><p><span style="font-family:SimSun; font-size:18px">3）多点对多点应用是指多个发送者和多个接收者的应用形式。通常，每个接收者可以接收多个发送者发送的数据，同时，每个发送者可以把数据发送给多个接收者。<span style="color:#ff0000">典型应用包括</span>：多点会议、资源同步、并行处理、协同处理、远程学习、讨论组、分布式交互模拟（DIS）、多人游戏等。</span></p></blockquote><p><span style="font-family:SimSun; font-size:18px"><br data-filtered="filtered"></span></p><h1><a name="t1" target="_blank"></a><span style="font-family:SimSun; font-size:18px">多播地址</span></h1><p><span style="font-family:SimSun; font-size:18px">IP 多播通信必须依赖于 IP 多播地址，在 IPv4 中它是一个 D 类 IP 地址，范围从 224.0.0.0 到 239.255.255.255，并被划分为<span style="color:#ff0000"><strong>局部链接多播地址、预留多播地址和管理权限多播地址</strong></span>三类：<br data-filtered="filtered"></span></p><blockquote style="margin:0 0 0 40px; border:none; padding:0px"><p><span style="font-family:SimSun; font-size:18px">1）<span style="background-color:rgb(255,204,0)">局部链接多播地址</span>范围在 224.0.0.0~224.0.0.255，这是为路由协议和其它用途保留的地址，路由器并不转发属于此范围的IP包；</span></p></blockquote><blockquote style="margin:0 0 0 40px; border:none; padding:0px"><p><span style="font-family:SimSun; font-size:18px">2）<span style="background-color:rgb(255,204,0)">预留多播地址</span>为 224.0.1.0~238.255.255.255，可用于全球范围（如Internet）或网络协议；</span></p></blockquote><blockquote style="margin:0 0 0 40px; border:none; padding:0px"><p><span style="font-family:SimSun; font-size:18px">3）<span style="background-color:rgb(255,204,0)">管理权限多播地址</span>为 239.0.0.0~239.255.255.255，可供组织内部使用，类似于私有 IP 地址，不能用于 Internet，可限制多播范围。</span></p></blockquote><p><span style="font-family:SimSun; font-size:18px"><br data-filtered="filtered"></span></p><p><span style="font-family:SimSun; font-size:18px">一些多播组地址被 IANA 确定为知名地址，它们也被当作永久主机组，这和 TCP 及 UDP 中的知名端口相似。同样，这些知名多播地址在 RFC 最新分配数字中列出，注意这些多播地址所代表的组是永久组，而它们的组成员却不是永久的。这些地址如下：<br data-filtered="filtered"></span></p><blockquote style="margin:0 0 0 40px; border:none; padding:0px"><p><span style="font-family:SimSun; font-size:18px">224.0.0.1 &nbsp; &nbsp;所有组播主机</span></p><p><span style="font-family:SimSun; font-size:18px">224.0.0.2 &nbsp; &nbsp;所有组播路由器</span></p><p><span style="font-family:SimSun; font-size:18px">224.0.0.4 &nbsp; &nbsp;DRMRP 路由器</span></p><p><span style="font-family:SimSun; font-size:18px">224.0.0.5 &nbsp; &nbsp;所有 OSPF 的路由器</span></p><p><span style="font-family:SimSun; font-size:18px">224.0.0.6 &nbsp; &nbsp;OSPF 指派路由器</span></p><p><span style="font-family:SimSun; font-size:18px">224.0.0.9 &nbsp; &nbsp;RPIv2 路由器</span></p><p><span style="font-family:SimSun; font-size:18px">224.0.0.10 &nbsp;EIGRP 路由器</span></p><p><span style="font-family:SimSun; font-size:18px">224.0.0.13 &nbsp;PIM 路由器</span></p><p><span style="font-family:SimSun; font-size:18px">224.0.0.22 &nbsp;IGMPv3</span></p><p><span style="font-family:SimSun; font-size:18px">224.0.0.25 &nbsp;RGMP</span></p><p><span style="font-family:SimSun; font-size:18px">224.0.1.1 &nbsp; &nbsp;NTP 网络时间协议</span></p></blockquote><p><span style="font-family:SimSun; font-size:18px"><br data-filtered="filtered"></span></p><h1><a name="t2" target="_blank"></a><span style="font-family:SimSun; font-size:18px">多播地址与 MAC 地址的映射</span></h1><p><span style="font-family:SimSun; font-size:18px">使用同一个 IP 多播地址接收多播数据包的所有主机构成了一个主机组，也称为<span style="color:#ff0000"><strong>多播组</strong></span>。一个多播组的成员是随时变动的，一台主机可以随时加入或离开多播组，多播组成员的数目和所在的地理位置也不受限制，一台主机也可以属于几个多播组。</span></p><p><span style="font-family:SimSun; font-size:18px"><br data-filtered="filtered"></span></p><p><span style="font-family:SimSun; font-size:18px">这个我们可以这样理解，<strong><span style="color:#ff0000">多播地址就类似于 QQ 群号，多播组相当于 QQ 群，一个个的主机就相当于群里面的成员</span></strong>。</span></p><p><span style="font-family:SimSun; font-size:18px"><br data-filtered="filtered"></span></p><p><span style="font-family:SimSun; font-size:18px"><span style="color:#ff0000"><strong>&nbsp;IPv4 的 D 类地址是多播地址</strong></span>。IEEE 把一块以太网多播组地址分给 IANA 以支持IP多播。块的地址都以 01:00:5e 开头，第 25 位为 0，低 23 位为 IPv4 多播地址( D类地址 )的低 23 位。IPv4 多播地址与 MAC 地址的映射关系如图所示：<br data-filtered="filtered"></span></p><p style="text-align:center"><span style="font-family:SimSun; font-size:18px"><img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/20150320171701966" alt="" width="750" height="200"><br data-filtered="filtered"></span></p><p><span style="font-family:SimSun; font-size:18px"><br data-filtered="filtered"></span></p><p><span style="font-family:SimSun; font-size:18px"><span style="color:#ff0000"><strong>由于多播地址( D类地址 )中的最高 5bit 在映射过程中被忽略，因此每个以太网多播地址对应的多播组是不唯一的</strong></span>。32 个不同的多播组号被映射为一个以太网地址。例如，多播地址&nbsp;224.128.64.32（十六进制 e0.80.40.20）和 224.0.64.32（十六进制 e0.00.40.20）都映射为同一以太网地址 01:00:5e:00:40:20。<br data-filtered="filtered"></span></p><p><span style="font-family:SimSun; font-size:18px"><br data-filtered="filtered"></span></p><p><span style="font-family:SimSun; font-size:18px"><span style="color:#ff0000"><strong>既然地址映射是不唯一的，那么设备驱动程序或 IP 层就必须对数据报进行过滤。</strong></span>因为网卡可能接收到主机不想接收的多播数据帧，如下图，假如主机 1 加入的多播为 224.128.64.32， 主机 2 加入的多播为 224.0.64.32，我们想给 224.0.64.32 所在的多播组 ( 主机 2 ) 发送信息，数据经过网卡时，224.128.64.32 (主机 1 ) 和 224.0.64.32 (主机 2 ) 所在多播组的网卡都会收到数据，因为它们的 MAC 地址都是 01:00:5e:00:40:20。<strong><span style="color:#ff0000">这时候，如果网卡不提供足够的多播数据帧过滤功能，设备驱动程序就必须接收所有多播数据帧，然后对它们进行过滤，这个过滤过程是网络驱动或IP层自动完成。</span></strong><br data-filtered="filtered"></span></p><p style="text-align:center"><span style="font-family:SimSun; font-size:18px"><img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/20150320185834904" alt="" width="600" height="400"><br data-filtered="filtered"></span></p><h1><a name="t3" target="_blank"></a><span style="font-family:SimSun; font-size:18px">Linux多播编程</span></h1><p><span style="font-family:SimSun; font-size:18px"><strong>套接口选项</strong><br data-filtered="filtered"></span></p><p><span style="color:#ff0000"><span style="font-family:SimSun; font-size:18px"><strong>int setsockopt( int sockfd, int level,int optname, &nbsp;&nbsp;<br data-filtered="filtered"></strong></span></span></p><blockquote style="margin:0 0 0 40px; border:none; padding:0px"><blockquote style="margin:0 0 0 40px; border:none; padding:0px"><blockquote style="margin:0 0 0 40px; border:none; padding:0px"><p><span style="color:#ff0000"><span style="font-family:SimSun; font-size:18px"><strong>const void *optval, socklen_t optlen );</strong></span></span></p></blockquote></blockquote></blockquote><span style="font-family:SimSun; font-size:18px"><img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/20150320193959336" alt="" width="600" height="180"><br data-filtered="filtered"></span><p><span style="font-family:SimSun; font-size:18px"><br data-filtered="filtered"></span></p><p><span style="font-family:SimSun; font-size:18px">成功执行返回0，否则返回-1</span></p><p><span style="font-family:SimSun; font-size:18px"><br data-filtered="filtered"></span></p><p><span style="font-family:SimSun; font-size:18px; background-color:rgb(255,255,255)"><strong>选项 IP_ADD_MEMBERSHIP 和 IP_DROP_MEMBERSHIP</strong></span></p><p><span style="font-family:SimSun; font-size:18px">加入或者退出一个多播组，通过选项 IP_ADD_MEMBERSHIP 和 IP_DROP_MEMBERSHIP，对一个结构 struct ip_mreq 类型的变量进行控制，struct ip_mreq 原型如下：<br data-filtered="filtered"></span></p><p><span style="font-family:SimSun; font-size:18px">struct in_addr<br data-filtered="filtered">{<br data-filtered="filtered"><span style="white-space:pre" data-filtered="filtered"></span></span></p><blockquote style="margin:0 0 0 40px; border:none; padding:0px"><p><span style="font-family:SimSun; font-size:18px">in_addr_t s_addr;</span></p></blockquote><p><span style="font-family:SimSun; font-size:18px">}<br data-filtered="filtered"><br data-filtered="filtered"><br data-filtered="filtered">struct ip_mreq &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<br data-filtered="filtered">{&nbsp;<br data-filtered="filtered"><span style="white-space:pre" data-filtered="filtered"></span></span></p><blockquote style="margin:0 0 0 40px; border:none; padding:0px"><p><span style="font-family:SimSun; font-size:18px">struct in_addr imn_multiaddr; // 多播组 IP，类似于 QQ 群号</span></p><p><span style="font-family:SimSun; font-size:18px">struct in_addr imr_interface; &nbsp; // 将要添加到多播组的 IP，类似于QQ 成员号</span></p></blockquote><p><span style="font-family:SimSun; font-size:18px">};<br data-filtered="filtered"></span></p><p><span style="font-family:SimSun; font-size:18px"><br data-filtered="filtered"></span></p><p><strong><span style="color:rgb(255,0,0)"><span style="font-family:SimSun; font-size:18px">多播只能用 UDP 或原始 IP 实现，不能用 TCP。</span></span></strong></p><p><span style="font-size:24px"><br data-filtered="filtered"></span></p><p><strong><span style="font-family:SimSun; font-size:18px">加入多播实例：</span></strong></p><p><strong data-filtered="filtered"><span style="font-family:SimSun; font-size:18px" data-filtered="filtered"></span></strong></p><div class="dp-highlighter bg_cpp"><div class="bar"><div class="tools"><b>[cpp]</b> <a href="http://blog.csdn.net/tennysonsky/article/details/44493407#" class="ViewSource" title="view plain" onclick="dp.sh.Toolbar.Command(&#39;ViewSource&#39;,this);return false;" target="_blank">view plain</a><span data-mod="popu_168"> <a href="http://blog.csdn.net/tennysonsky/article/details/44493407#" class="CopyToClipboard" title="copy" onclick="dp.sh.Toolbar.Command(&#39;CopyToClipboard&#39;,this);return false;" target="_blank">copy</a><div style="position: absolute; left: 533px; top: 3671px; width: 18px; height: 18px; z-index: 99;"><embed id="ZeroClipboardMovie_1" src="http://static.blog.csdn.net/scripts/ZeroClipboard/ZeroClipboard.swf" loop="false" menu="false" quality="best" bgcolor="#ffffff" width="18" height="18" name="ZeroClipboardMovie_1" align="middle" allowscriptaccess="always" allowfullscreen="false" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer" flashvars="id=1&amp;width=18&amp;height=18" wmode="transparent"></div></span><span data-mod="popu_169"> <a href="http://blog.csdn.net/tennysonsky/article/details/44493407#" class="PrintSource" title="print" onclick="dp.sh.Toolbar.Command(&#39;PrintSource&#39;,this);return false;" target="_blank">print</a></span><a href="http://blog.csdn.net/tennysonsky/article/details/44493407#" class="About" title="?" onclick="dp.sh.Toolbar.Command(&#39;About&#39;,this);return false;" target="_blank">?</a></div></div><ol start="1" class="dp-cpp"><li class="alt"><span><span class="preprocessor">#include&nbsp;&lt;stdio.h&gt;</span><span>&nbsp;&nbsp;</span></span></li><li class=""><span><span class="preprocessor">#include&nbsp;&lt;stdlib.h&gt;</span><span>&nbsp;&nbsp;</span></span></li><li class="alt"><span><span class="preprocessor">#include&nbsp;&lt;unistd.h&gt;</span><span>&nbsp;&nbsp;</span></span></li><li class=""><span><span class="preprocessor">#include&nbsp;&lt;fcntl.h&gt;</span><span>&nbsp;&nbsp;</span></span></li><li class="alt"><span><span class="preprocessor">#include&nbsp;&lt;sys/socket.h&gt;</span><span>&nbsp;&nbsp;</span></span></li><li class=""><span><span class="preprocessor">#include&nbsp;&lt;netinet/in.h&gt;</span><span>&nbsp;&nbsp;</span></span></li><li class="alt"><span><span class="preprocessor">#include&nbsp;&lt;arpa/inet.h&gt;</span><span>&nbsp;&nbsp;</span></span></li><li class=""><span><span class="preprocessor">#include&nbsp;&lt;string.h&gt;</span><span>&nbsp;&nbsp;</span></span></li><li class="alt"><span><span class="preprocessor">#include&nbsp;&lt;errno.h&gt;</span><span>&nbsp;&nbsp;</span></span></li><li class=""><span><span class="preprocessor">#include&nbsp;&lt;sys/types.h&gt;</span><span>&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;</span></li><li class=""><span><span class="datatypes">int</span><span>&nbsp;main(</span><span class="datatypes">int</span><span>&nbsp;argc,&nbsp;</span><span class="datatypes">char</span><span>*argv[])&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class="alt"><span>{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="datatypes">int</span><span>&nbsp;sockfd;&nbsp;</span><span class="comment">//&nbsp;套接字文件描述符&nbsp;&nbsp;</span><span>&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">struct</span><span>&nbsp;sockaddr_in&nbsp;local_addr;&nbsp;</span><span class="comment">//&nbsp;本地地址&nbsp;</span><span>&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="datatypes">int</span><span>&nbsp;err&nbsp;=&nbsp;-1;&nbsp;&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="datatypes">char</span><span>&nbsp;group[16]&nbsp;=&nbsp;</span><span class="string">"224.0.0.88"</span><span>;&nbsp;</span><span class="comment">//&nbsp;多播组&nbsp;IP</span><span>&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;sockfd&nbsp;=&nbsp;socket(AF_INET,&nbsp;SOCK_DGRAM,&nbsp;0);&nbsp;&nbsp;<span class="comment">//建立套接字</span><span>&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span><span>&nbsp;(sockfd&nbsp;==&nbsp;-1)&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(<span class="string">"socket()"</span><span>);&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span><span>&nbsp;-1;&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">//&nbsp;初始化地址&nbsp;</span><span>&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;local_addr,&nbsp;0,&nbsp;<span class="keyword">sizeof</span><span>(local_addr));&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;local_addr.sin_family&nbsp;=&nbsp;AF_INET;&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;local_addr.sin_addr.s_addr&nbsp;=&nbsp;htonl(INADDR_ANY);&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;local_addr.sin_port&nbsp;=&nbsp;htons(8000);&nbsp;&nbsp;</span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">//&nbsp;绑定socket&nbsp;&nbsp;</span><span>&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;err&nbsp;=&nbsp;bind(sockfd,(<span class="keyword">struct</span><span>&nbsp;sockaddr*)&amp;local_addr,&nbsp;</span><span class="keyword">sizeof</span><span>(local_addr));&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span><span>(err&nbsp;&lt;&nbsp;0)&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(<span class="string">"bind()"</span><span>);&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span><span>&nbsp;-2;&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class="alt"><span>&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">struct</span><span>&nbsp;ip_mreq&nbsp;mreq;&nbsp;</span><span class="comment">//&nbsp;多播地址结构体&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span>&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">//&nbsp;加入多播组，相当于创建一个QQ群，某人加入此群</span><span>&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;mreq.imr_multiaddr.s_addr&nbsp;=&nbsp;inet_addr(group);&nbsp;<span class="comment">//&nbsp;多播地址，类似于&nbsp;QQ&nbsp;群号&nbsp;</span><span>&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;mreq.imr_interface.s_addr&nbsp;=&nbsp;htonl(INADDR_ANY);<span class="comment">//&nbsp;将本机加入多播组，类似于某人加入此群</span><span>&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">//&nbsp;加入多播组</span><span>&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;err&nbsp;=&nbsp;setsockopt(sockfd,&nbsp;IPPROTO_IP,&nbsp;IP_ADD_MEMBERSHIP,&amp;mreq,&nbsp;<span class="keyword">sizeof</span><span>(mreq));&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span><span>&nbsp;(err&nbsp;&lt;&nbsp;0)&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(<span class="string">"setsockopt():IP_ADD_MEMBERSHIP"</span><span>);&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span><span>&nbsp;-4;&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;</span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="datatypes">int</span><span>&nbsp;times&nbsp;=&nbsp;0;&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="datatypes">int</span><span>&nbsp;addr_len&nbsp;=&nbsp;0;&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="datatypes">char</span><span>&nbsp;buff[256]&nbsp;=&nbsp;{0};&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="datatypes">int</span><span>&nbsp;n&nbsp;=&nbsp;0;&nbsp;&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">//&nbsp;循环接收广播组的消息，5次后退出</span><span>&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">for</span><span>(times&nbsp;=&nbsp;0;&nbsp;times&lt;5;&nbsp;times++)&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;addr_len&nbsp;=&nbsp;<span class="keyword">sizeof</span><span>(local_addr);&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;memset(buff,&nbsp;0,&nbsp;<span class="keyword">sizeof</span><span>(buff));&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">//&nbsp;接收数据&nbsp;</span><span>&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n&nbsp;=&nbsp;recvfrom(sockfd,&nbsp;buff,&nbsp;<span class="keyword">sizeof</span><span>(buff),&nbsp;0,(</span><span class="keyword">struct</span><span>&nbsp;sockaddr*)&amp;local_addr,&nbsp;&amp;addr_len);&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span><span>(&nbsp;n==&nbsp;-1)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(<span class="string">"recvfrom()"</span><span>);&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;</span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;printf(<span class="string">"Recv&nbsp;%dst&nbsp;message&nbsp;from&nbsp;server:%s\n"</span><span>,&nbsp;times,&nbsp;buff);&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sleep(2);&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">//&nbsp;退出广播组&nbsp;</span><span>&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;err&nbsp;=&nbsp;setsockopt(sockfd,&nbsp;IPPROTO_IP,&nbsp;IP_DROP_MEMBERSHIP,&amp;mreq,&nbsp;<span class="keyword">sizeof</span><span>(mreq));&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;close(sockfd);&nbsp;&nbsp;&nbsp;</span></li><li class="alt"><span>&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span><span>&nbsp;0;&nbsp;&nbsp;&nbsp;&nbsp;</span></span></li><li class="alt"><span>}&nbsp;&nbsp;&nbsp;</span></li></ol></div><pre code_snippet_id="680480" snippet_file_name="blog_20150617_1_9808530" name="code" class="cpp" data-filtered="filtered" style="display: none;">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;sys/socket.h&gt;
+#include &lt;netinet/in.h&gt;
+#include &lt;arpa/inet.h&gt;
+#include &lt;string.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;sys/types.h&gt;
+
+int main(int argc, char*argv[])  
+{     
+	int sockfd; // 套接字文件描述符  
+	struct sockaddr_in local_addr; // 本地地址 
+	int err = -1; 
+	char group[16] = "224.0.0.88"; // 多播组 IP
+	  
+	sockfd = socket(AF_INET, SOCK_DGRAM, 0);  //建立套接字
+	if (sockfd == -1)  
+	{  
+		perror("socket()");  
+		return -1;  
+	}     
+	  
+	// 初始化地址 
+	memset(&amp;local_addr, 0, sizeof(local_addr));  
+	local_addr.sin_family = AF_INET;  
+	local_addr.sin_addr.s_addr = htonl(INADDR_ANY);  
+	local_addr.sin_port = htons(8000);
+	  
+	// 绑定socket  
+	err = bind(sockfd,(struct sockaddr*)&amp;local_addr, sizeof(local_addr));  
+	if(err &lt; 0)  
+	{  
+		perror("bind()");  
+		return -2;  
+	}    
+
+	struct ip_mreq mreq; // 多播地址结构体                                 
+
+	// 加入多播组，相当于创建一个QQ群，某人加入此群
+	mreq.imr_multiaddr.s_addr = inet_addr(group); // 多播地址，类似于 QQ 群号 
+	mreq.imr_interface.s_addr = htonl(INADDR_ANY);// 将本机加入多播组，类似于某人加入此群
+	// 加入多播组
+	err = setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP,&amp;mreq, sizeof(mreq));  
+	if (err &lt; 0)  
+	{  
+		perror("setsockopt():IP_ADD_MEMBERSHIP");  
+		return -4;  
+	}  
+
+	int times = 0;  
+	int addr_len = 0;  
+	char buff[256] = {0};  
+	int n = 0; 
+
+	// 循环接收广播组的消息，5次后退出
+	for(times = 0; times&lt;5; times++)  
+	{  
+		addr_len = sizeof(local_addr);  
+		memset(buff, 0, sizeof(buff));     
+		
+		// 接收数据 
+		n = recvfrom(sockfd, buff, sizeof(buff), 0,(struct sockaddr*)&amp;local_addr, &amp;addr_len);  
+		if( n== -1)   
+		{  
+			perror("recvfrom()");  
+		}  
+
+		printf("Recv %dst message from server:%s\n", times, buff);  
+		sleep(2);   
+	}  
+	  
+	// 退出广播组 
+	err = setsockopt(sockfd, IPPROTO_IP, IP_DROP_MEMBERSHIP,&amp;mreq, sizeof(mreq));  
+		  
+	close(sockfd); 
+
+	return 0;  
+} </pre><p><br data-filtered="filtered"></p><p><span style="font-size:14px;">以上代码编译运行时，可以会出现这样的错误：<strong><span style="color:#ff0000;">No such device</span></strong>。这主要和网络配置有关，解决方法请点此链接：<a target="_blank" href="http://blog.csdn.net/tennysonsky/article/details/49050579">http://blog.csdn.net/tennysonsky/article/details/49050579</a>。</span></p><p><br data-filtered="filtered"></p><p><strong><span style="font-family:SimSun; font-size:18px">向多播组发送信息的测试示例：</span></strong></p><p><strong data-filtered="filtered"><span style="font-size:24px" data-filtered="filtered"><span style="font-family:KaiTi_GB2312" data-filtered="filtered"></span></span></strong></p><div class="dp-highlighter bg_cpp"><div class="bar"><div class="tools"><b>[cpp]</b> <a href="http://blog.csdn.net/tennysonsky/article/details/44493407#" class="ViewSource" title="view plain" onclick="dp.sh.Toolbar.Command(&#39;ViewSource&#39;,this);return false;" target="_blank">view plain</a><span data-mod="popu_168"> <a href="http://blog.csdn.net/tennysonsky/article/details/44493407#" class="CopyToClipboard" title="copy" onclick="dp.sh.Toolbar.Command(&#39;CopyToClipboard&#39;,this);return false;" target="_blank">copy</a><div style="position: absolute; left: 533px; top: 5328px; width: 18px; height: 18px; z-index: 99;"><embed id="ZeroClipboardMovie_2" src="http://static.blog.csdn.net/scripts/ZeroClipboard/ZeroClipboard.swf" loop="false" menu="false" quality="best" bgcolor="#ffffff" width="18" height="18" name="ZeroClipboardMovie_2" align="middle" allowscriptaccess="always" allowfullscreen="false" type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/go/getflashplayer" flashvars="id=2&amp;width=18&amp;height=18" wmode="transparent"></div></span><span data-mod="popu_169"> <a href="http://blog.csdn.net/tennysonsky/article/details/44493407#" class="PrintSource" title="print" onclick="dp.sh.Toolbar.Command(&#39;PrintSource&#39;,this);return false;" target="_blank">print</a></span><a href="http://blog.csdn.net/tennysonsky/article/details/44493407#" class="About" title="?" onclick="dp.sh.Toolbar.Command(&#39;About&#39;,this);return false;" target="_blank">?</a></div></div><ol start="1" class="dp-cpp"><li class="alt"><span><span class="preprocessor">#include&nbsp;&lt;stdio.h&gt;</span><span>&nbsp;&nbsp;</span></span></li><li class=""><span><span class="preprocessor">#include&nbsp;&lt;stdlib.h&gt;</span><span>&nbsp;&nbsp;</span></span></li><li class="alt"><span><span class="preprocessor">#include&nbsp;&lt;unistd.h&gt;</span><span>&nbsp;&nbsp;</span></span></li><li class=""><span><span class="preprocessor">#include&nbsp;&lt;fcntl.h&gt;</span><span>&nbsp;&nbsp;</span></span></li><li class="alt"><span><span class="preprocessor">#include&nbsp;&lt;sys/socket.h&gt;</span><span>&nbsp;&nbsp;</span></span></li><li class=""><span><span class="preprocessor">#include&nbsp;&lt;netinet/in.h&gt;</span><span>&nbsp;&nbsp;</span></span></li><li class="alt"><span><span class="preprocessor">#include&nbsp;&lt;arpa/inet.h&gt;</span><span>&nbsp;&nbsp;</span></span></li><li class=""><span><span class="preprocessor">#include&nbsp;&lt;string.h&gt;</span><span>&nbsp;&nbsp;</span></span></li><li class="alt"><span><span class="preprocessor">#include&nbsp;&lt;errno.h&gt;</span><span>&nbsp;&nbsp;</span></span></li><li class=""><span><span class="preprocessor">#include&nbsp;&lt;sys/types.h&gt;</span><span>&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;</span></li><li class=""><span><span class="datatypes">int</span><span>&nbsp;main(</span><span class="datatypes">int</span><span>&nbsp;argc,&nbsp;</span><span class="datatypes">char</span><span>*argv)&nbsp;&nbsp;</span></span></li><li class="alt"><span>{&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="datatypes">int</span><span>&nbsp;sockfd;&nbsp;</span><span class="comment">//&nbsp;套接字文件描述符</span><span>&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">struct</span><span>&nbsp;sockaddr_in&nbsp;dest_addr;&nbsp;</span><span class="comment">//&nbsp;目标ip</span><span>&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="datatypes">char</span><span>&nbsp;buf[]&nbsp;=&nbsp;</span><span class="string">"BROADCAST&nbsp;TEST&nbsp;DATA"</span><span>;&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;sockfd&nbsp;=&nbsp;socket(AF_INET,&nbsp;SOCK_DGRAM,&nbsp;0);&nbsp;<span class="comment">//&nbsp;建立套接字</span><span>&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span><span>&nbsp;(s&nbsp;==&nbsp;-1)&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;&nbsp;</span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(<span class="string">"socket()"</span><span>);&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span><span>&nbsp;-1;&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;</span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">//&nbsp;初始化目标&nbsp;ip&nbsp;信息</span><span>&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;memset(&amp;dest_addr,&nbsp;0,&nbsp;<span class="keyword">sizeof</span><span>(dest_addr));&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;dest_addr.sin_family&nbsp;=&nbsp;AF_INET;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;dest_addr.sin_addr.s_addr&nbsp;=&nbsp;inet_addr(<span class="string">"224.0.0.88"</span><span>);&nbsp;</span><span class="comment">//&nbsp;目的地址，为多播地址</span><span>&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;dest_addr.sin_port&nbsp;=&nbsp;htons(8000);&nbsp;&nbsp;&nbsp;<span class="comment">//&nbsp;多播服务器的端口也是&nbsp;8000</span><span>&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;</span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">//&nbsp;向多播地址发送数据</span><span>&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">while</span><span>(1){&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="datatypes">int</span><span>&nbsp;n&nbsp;=&nbsp;sendto(sockfd,&nbsp;buf,&nbsp;strlen(buf),&nbsp;0,(</span><span class="keyword">struct</span><span>&nbsp;sockaddr*)&amp;dest_addr,&nbsp;</span><span class="keyword">sizeof</span><span>(dest_addr));&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">if</span><span>(&nbsp;n&nbsp;&lt;&nbsp;0)&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;perror(<span class="string">"sendto()"</span><span>);&nbsp;&nbsp;</span></span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span><span>&nbsp;-2;&nbsp;&nbsp;</span></span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></li><li class="alt"><span>&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sleep(1);&nbsp;&nbsp;</span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;}&nbsp;&nbsp;</span></li><li class=""><span>&nbsp;&nbsp;</span></li><li class="alt"><span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span><span>&nbsp;0；&nbsp;&nbsp;</span></span></li><li class=""><span>}&nbsp;&nbsp;</span></li></ol></div><pre code_snippet_id="680480" snippet_file_name="blog_20150601_2_1375189" name="code" class="cpp" data-filtered="filtered" style="display: none;">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;sys/socket.h&gt;
+#include &lt;netinet/in.h&gt;
+#include &lt;arpa/inet.h&gt;
+#include &lt;string.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;sys/types.h&gt;
+
+int main(int argc, char*argv)
+{
+	int sockfd; // 套接字文件描述符
+	struct sockaddr_in dest_addr; // 目标ip
+	char buf[] = "BROADCAST TEST DATA";
+
+	sockfd = socket(AF_INET, SOCK_DGRAM, 0); // 建立套接字
+	if (s == -1)
+	{
+		perror("socket()");
+		return -1;
+	}
+
+	// 初始化目标 ip 信息
+	memset(&amp;dest_addr, 0, sizeof(dest_addr));
+	dest_addr.sin_family = AF_INET;               
+	dest_addr.sin_addr.s_addr = inet_addr("224.0.0.88"); // 目的地址，为多播地址
+	dest_addr.sin_port = htons(8000); 	// 多播服务器的端口也是 8000
+
+	// 向多播地址发送数据
+	while(1){
+		int n = sendto(sockfd, buf, strlen(buf), 0,(struct sockaddr*)&amp;dest_addr, sizeof(dest_addr));
+		if( n &lt; 0)
+		{
+			perror("sendto()");
+			return -2;
+		}      
+
+		sleep(1);
+	}
+
+	return 0；
+}
+</pre><p><br data-filtered="filtered"></p>   
+</div>
+
+
+
+
+<!-- Baidu Button BEGIN -->
+
+
+
+
+<div class="bdsharebuttonbox tracking-ad bdshare-button-style0-16" style="float: right;" data-mod="popu_172" data-bd-bind="1508811288606">
+<a href="http://blog.csdn.net/tennysonsky/article/details/44493407#" class="bds_more" data-cmd="more" style="background-position:0 0 !important; background-image: url(http://bdimg.share.baidu.com/static/api/img/share/icons_0_16.png?v=d754dcc0.png) !important" target="_blank"></a>
+<a href="http://blog.csdn.net/tennysonsky/article/details/44493407#" class="bds_qzone" data-cmd="qzone" title="分享到QQ空间" style="background-position:0 -52px !important" target="_blank"></a>
+<a href="http://blog.csdn.net/tennysonsky/article/details/44493407#" class="bds_tsina" data-cmd="tsina" title="分享到新浪微博" style="background-position:0 -104px !important" target="_blank"></a>
+<a href="http://blog.csdn.net/tennysonsky/article/details/44493407#" class="bds_tqq" data-cmd="tqq" title="分享到腾讯微博" style="background-position:0 -260px !important" target="_blank"></a>
+<a href="http://blog.csdn.net/tennysonsky/article/details/44493407#" class="bds_renren" data-cmd="renren" title="分享到人人网" style="background-position:0 -208px !important" target="_blank"></a>
+<a href="http://blog.csdn.net/tennysonsky/article/details/44493407#" class="bds_weixin" data-cmd="weixin" title="分享到微信" style="background-position:0 -1612px !important" target="_blank"></a>
+</div>
+<script>window._bd_share_config = { "common": { "bdSnsKey": {}, "bdText": "", "bdMini": "1", "bdMiniList": false, "bdPic": "", "bdStyle": "0", "bdSize": "16" }, "share": {} }; with (document) 0[(getElementsByTagName('head')[0] || body).appendChild(createElement('script')).src = 'http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion=' + ~(-new Date() / 36e5)];</script>
+<!-- Baidu Button END -->
+
+   
+
+<!--172.16.140.13-->
+
+<!-- Baidu Button BEGIN -->
+<script type="text/javascript" id="bdshare_js" data="type=tools&amp;uid=1536434" src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/bds_s_v2.js"></script>
+
+<script type="text/javascript">
+    document.getElementById("bdshell_js").src = "http://bdimg.share.baidu.com/static/js/shell_v2.js?cdnversion=" + Math.ceil(new Date()/3600000)
+</script>
+<!-- Baidu Button END -->
+
+
+
+ 
+
+
+        <div id="digg" articleid="44493407">
+            <dl id="btnDigg" class="digg digg_disable" onclick="btndigga();">
+               
+                 <dt>顶</dt>
+                <dd>6</dd>
+            </dl>
+           
+              
+            <dl id="btnBury" class="digg digg_disable" onclick="btnburya();">
+              
+                  <dt>踩</dt>
+                <dd>0</dd>               
+            </dl>
+            
+        </div>
+     <div class="tracking-ad" data-mod="popu_222"><a href="javascript:void(0);" target="_blank">&nbsp;</a>   </div>
+    <div class="tracking-ad" data-mod="popu_223"> <a href="javascript:void(0);" target="_blank">&nbsp;</a></div>
+    <script type="text/javascript">
+        function btndigga() {
+            $(".tracking-ad[data-mod='popu_222'] a").click();
+        }
+        function btnburya() {
+            $(".tracking-ad[data-mod='popu_223'] a").click();
+        }
+            </script>
+
+   <ul class="article_next_prev">
+                <li class="prev_article"><span onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_shangyipian&#39;]);location.href=&#39;http://blog.csdn.net/tennysonsky/article/details/44455565&#39;;">上一篇</span><a href="http://blog.csdn.net/tennysonsky/article/details/44455565" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_shangyipian&#39;])">Linux网络编程——无连接和面向连接协议的区别</a></li>
+                <li class="next_article"><span onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_xiayipian&#39;]);location.href=&#39;http://blog.csdn.net/tennysonsky/article/details/44562435&#39;;">下一篇</span><a href="http://blog.csdn.net/tennysonsky/article/details/44562435" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_xiayipian&#39;])">如何理解HTTP协议的 “无连接，无状态” 特点？</a></li>
+    </ul>
+
+    <div style="clear:both; height:10px;"></div>
+
+
+            <div class="similar_article">
+                    <h4></h4>
+                    <div class="similar_c" style="margin:20px 0px 0px 0px">
+                        <div class="similar_c_t">
+                          &nbsp;&nbsp;相关文章推荐
+                        </div>
+                   
+                        <div class="similar_wrap tracking-ad" data-mod="popu_36" style="max-height:250px">                       
+                            <ul class="similar_list fl">    
+                                   <li>
+                                       <em>•</em>
+                                       <a href="http://download.csdn.net/download/tennysonsky/9172233" title="Linux多播组测试代码" strategy="BlogCommendFromBaidu_0" target="_blank">Linux多播组测试代码</a>
+                                   </li>
+                                   <li>
+                                       <em>•</em>
+                                       <a href="http://edu.csdn.net/huiyiCourse/series_detail/68?utm_source=wx2" title="用户画像系统应用与技术解析--汪剑" strategy="undefined" target="_blank">用户画像系统应用与技术解析--汪剑</a>
+                                   </li>
+                                   <li>
+                                       <em>•</em>
+                                       <a href="http://blog.csdn.net/tennysonsky/article/details/49050579" title="Linux多播问题（No such device）解决方法" strategy="BlogCommendFromBaidu_1" target="_blank">Linux多播问题（No such device）解决方法</a>
+                                   </li>
+                                   <li>
+                                       <em>•</em>
+                                       <a href="http://edu.csdn.net/huiyiCourse/series_detail/70?utm_source=blog7" title="2017 求职面试集训营之VIP服务版--刘道宽" strategy="undefined" target="_blank">2017 求职面试集训营之VIP服务版--刘道宽</a>
+                                   </li>
+                                   <li>
+                                       <em>•</em>
+                                       <a href="http://blog.csdn.net/tigerjb/article/details/6801273" title="基于Linux的多播编程" strategy="BlogCommendFromBaidu_2" target="_blank">基于Linux的多播编程</a>
+                                   </li>
+                                   <li>
+                                       <em>•</em>
+                                       <a href="http://edu.csdn.net/course/detail/5116?utm_source=blog7" title="如何优雅地编写Java" strategy="undefined" target="_blank">如何优雅地编写Java</a>
+                                   </li>
+                                   <li>
+                                       <em>•</em>
+                                       <a href="http://blog.csdn.net/chenben/article/details/12650899" title="Onvif 设备发现的多网卡选择问题" strategy="BlogCommendFromBaidu_3" target="_blank">Onvif 设备发现的多网卡选择问题</a>
+                                   </li>
+                                   <li>
+                                       <em>•</em>
+                                       <a href="http://edu.csdn.net/course/detail/5337?utm_source=blog7" title="MySQL特性详解" strategy="undefined" target="_blank">MySQL特性详解</a>
+                                   </li>
+                            </ul>
+                              <ul class="similar_list fr">      
+                                   <li>
+                                       <em>•</em>
+                                       <a href="http://blog.csdn.net/wqc_CSDN/article/details/51588769" title="Linux下的TCP/IP编程----多播和广播的实现" strategy="BlogCommendFromBaidu_4" target="_blank">Linux下的TCP/IP编程----多播和广播的实现</a>
+                                   </li>
+                                   <li>
+                                       <em>•</em>
+                                       <a href="http://edu.csdn.net/course/detail/4582?utm_source=blog7" title="React全家桶之Web基础应用" strategy="undefined" target="_blank">React全家桶之Web基础应用</a>
+                                   </li>
+                                   <li>
+                                       <em>•</em>
+                                       <a href="http://blog.csdn.net/jmq_0000/article/details/7095727" title="linux网络编程之-----多播（组播）编程" strategy="BlogCommendFromBaidu_5" target="_blank">linux网络编程之-----多播（组播）编程</a>
+                                   </li>
+                                   <li>
+                                       <em>•</em>
+                                       <a href="http://edu.csdn.net/course/detail/6143?utm_source=blog7" title="OpenStack从入门到放弃" strategy="undefined" target="_blank">OpenStack从入门到放弃</a>
+                                   </li>
+                                   <li>
+                                       <em>•</em>
+                                       <a href="http://blog.csdn.net/lianghe_work/article/details/45171167" title="Linux网络编程——多播" strategy="BlogCommendFromCsdn_6" target="_blank">Linux网络编程——多播</a>
+                                   </li>
+                                   <li>
+                                       <em>•</em>
+                                       <a href="http://blog.csdn.net/tennysonsky/article/details/44493407" title="Linux网络编程——多播" strategy="BlogCommendFromCsdn_7" target="_blank">Linux网络编程——多播</a>
+                                   </li>
+                                   <li>
+                                       <em>•</em>
+                                       <a href="http://blog.csdn.net/lianghe_work/article/details/45171167" title="Linux网络编程——多播" strategy="BlogCommendFromCsdn_8" target="_blank">Linux网络编程——多播</a>
+                                   </li>
+                                   <li>
+                                       <em>•</em>
+                                       <a href="http://download.csdn.net/download/li_wen01/9810324" title="linux网络编程：多播组播应用实例" strategy="BlogCommendFromCsdn_9" target="_blank">linux网络编程：多播组播应用实例</a>
+                                   </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>   
+      
+</div>
+
+
+<div id="suggest">
+
+</div>
+         <script language="javascript" type="text/javascript">     
+             $(function(){
+                 $.get("/tennysonsky/svc/GetSuggestContent/44493407",function(data){
+                     $("#suggest").html(data);
+                 });     
+             });             
+         </script>  
+
+
+
+            
+                                    
+            
+                                    
+
+        <!-- 广告位开始 -->
+        <!-- 广告位结束 -->
+
+
+<div class="comment_class">
+    <div id="comment_title" class="panel_head">
+        <span class="see_comment">查看评论</span><a name="comments"></a></div>
+    <div id="comment_list"><dl class="comment_item comment_topic" id="comment_item_7196326"><dt class="comment_head" floor="3">3楼 <span class="user"><a class="username" href="http://blog.csdn.net/qq_18119663" target="_blank">qq_18119663</a> <span class="ptime">2017-09-18 19:50发表</span>  <a href="http://blog.csdn.net/tennysonsky/article/details/44493407#reply" class="cmt_btn reply" title="回复">[回复]</a> <span class="comment_manage" style="display:none;" commentid="7196326" username="qq_18119663"> <a href="http://blog.csdn.net/tennysonsky/article/details/44493407#quote" class="cmt_btn quote" title="引用">[引用]</a> <a href="http://blog.csdn.net/tennysonsky/article/details/44493407#report" class="cmt_btn report" title="举报">[举报]</a></span></span></dt><dd class="comment_userface"><a href="http://blog.csdn.net/qq_18119663" target="_blank"><img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/3_qq_18119663.jpg" width="40" height="40"></a></dd><dd class="comment_body">佩服</dd></dl><dl class="comment_item comment_topic" id="comment_item_5258581"><dt class="comment_head" floor="2">2楼 <span class="user"><a class="username" href="http://blog.csdn.net/yunzhizi11" target="_blank">yunzhizi11</a> <span class="ptime">2015-07-31 17:54发表</span>  <a href="http://blog.csdn.net/tennysonsky/article/details/44493407#reply" class="cmt_btn reply" title="回复">[回复]</a> <span class="comment_manage" style="display: none;" commentid="5258581" username="yunzhizi11"> <a href="http://blog.csdn.net/tennysonsky/article/details/44493407#quote" class="cmt_btn quote" title="引用">[引用]</a> <a href="http://blog.csdn.net/tennysonsky/article/details/44493407#report" class="cmt_btn report" title="举报">[举报]</a></span></span></dt><dd class="comment_userface"><a href="http://blog.csdn.net/yunzhizi11" target="_blank"><img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/3_yunzhizi11.jpg" width="40" height="40"></a></dd><dd class="comment_body">有没有在多个台子上测试过这个程序呢？！据我所知，内核配置不一致会导致收不到数据吧</dd><dl class="comment_item comment_reply" id="comment_item_5271909"><dt class="comment_head" floor="2">Re: <span class="user"><a class="username" href="http://blog.csdn.net/tennysonsky" target="_blank">Mike__Jiang</a> <span class="ptime">2015-08-02 17:32发表</span>  <a href="http://blog.csdn.net/tennysonsky/article/details/44493407#reply" class="cmt_btn reply" title="回复">[回复]</a> <span class="comment_manage" style="display: none;" commentid="5271909" username="tennysonsky"> <a href="http://blog.csdn.net/tennysonsky/article/details/44493407#quote" class="cmt_btn quote" title="引用">[引用]</a> <a href="http://blog.csdn.net/tennysonsky/article/details/44493407#report" class="cmt_btn report" title="举报">[举报]</a></span></span></dt><dd class="comment_userface"><a href="http://blog.csdn.net/tennysonsky" target="_blank"><img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/3_tennysonsky.jpg" width="40" height="40"></a></dd><dd class="comment_body">回复yunzhizi11：测过，ubuntu 12.02, 14.04, 14.10</dd></dl></dl><dl class="comment_item comment_topic" id="comment_item_4879867"><dt class="comment_head" floor="1">1楼 <span class="user"><a class="username" href="http://blog.csdn.net/ly_cuobiezi" target="_blank">ly_cuobiezi</a> <span class="ptime">2015-03-26 19:36发表</span>  <a href="http://blog.csdn.net/tennysonsky/article/details/44493407#reply" class="cmt_btn reply" title="回复">[回复]</a> <span class="comment_manage" style="display: none;" commentid="4879867" username="ly_cuobiezi"> <a href="http://blog.csdn.net/tennysonsky/article/details/44493407#quote" class="cmt_btn quote" title="引用">[引用]</a> <a href="http://blog.csdn.net/tennysonsky/article/details/44493407#report" class="cmt_btn report" title="举报">[举报]</a></span></span></dt><dd class="comment_userface"><a href="http://blog.csdn.net/ly_cuobiezi" target="_blank"><img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/3_ly_cuobiezi.jpg" width="40" height="40"></a></dd><dd class="comment_body">不错，我们老师讲的时候不是很清楚，现在看了你的博客以后，非常清楚，理解的很透彻。谢了~~！！</dd></dl><div class="clear"></div></div>
+    <div id="comment_bar" style="display: none;">
+    </div>
+    <div id="comment_form"><div class="guest_link">您还没有登录,请<a href="javascript:void(0);" onclick="javascript:loginbox();">[登录]</a>或<a href="http://passport.csdn.net/account/register?from=http%3A%2F%2Fblog.csdn.net%2Ftennysonsky%2Farticle%2Fdetails%2F44493407">[注册]</a></div></div>
+    <div class="announce">
+        * 以上用户言论只代表其个人观点，不代表CSDN网站的观点或立场<a name="reply"></a><a name="quote"></a></div>
+</div>
+
+<script type="text/javascript">
+    var fileName = '44493407';
+    var commentscount = 4;
+    var islock = false
+</script>
+
+    <div id="ad_bot">
+    </div>
+<div id="report_dialog">
+</div>
+
+<div id="d-top" style="bottom:60px;">
+
+        <a id="quick-reply" class="btn btn-top q-reply" title="快速回复" style="display:none;">
+            <img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/blog-icon-reply.png" alt="快速回复">
+        </a>    
+    <a id="d-top-a" class="btn btn-top backtop" style="display: none;" title="返回顶部" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_huidaodingbu&#39;])">         
+         <img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/top.png" alt="TOP">
+    </a>
+</div>
+<script type="text/javascript">
+    $(function ()
+    {
+        $("#ad_frm_0").height("90px");
+        
+        setTimeout(function(){
+            $("#ad_frm_2").height("200px");
+        },1000);    
+    });
+  
+</script>
+<style type="text/css">
+    .tag_list
+    {
+        background: none repeat scroll 0 0 #FFFFFF;
+        border: 1px solid #D7CBC1;
+        color: #000000;
+        font-size: 12px;
+        line-height: 20px;
+        list-style: none outside none;
+        margin: 10px 2% 0 1%;
+        padding: 1px;
+    }
+    .tag_list h5
+    {
+        background: none repeat scroll 0 0 #E0DBD3;
+        color: #47381C;
+        font-size: 12px;
+        height: 24px;
+        line-height: 24px;
+        padding: 0 5px;
+        margin: 0;
+    }
+    .tag_list h5 a
+    {
+        color: #47381C;
+    }
+    .classify
+    {
+        margin: 10px 0;
+        padding: 4px 12px 8px;
+    }
+    .classify a
+    {
+        margin-right: 20px;
+        white-space: nowrap;
+    }
+</style>
+
+
+
+
+
+<div id="pop_win" style="display:none ;position: absolute; z-index: 10000; border: 1px solid rgb(220, 220, 220); top: 222.5px; left: 630px; opacity: 1; background: none 0px 0px repeat scroll rgb(255, 255, 255);">
+    
+</div>
+<div id="popup_mask"></div>
+<style>
+    #popup_mask
+    {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        z-index: 9999;
+        left: 0px;
+        top: 0px;
+        opacity: 0.3;
+        filter: alpha(opacity=30);
+        display: none;
+    }
+
+</style>
+
+
+
+
+<script type="text/javascript">
+    $(function(){        
+        
+        setTimeout(function(){
+            $(".comment_body:contains('回复')").each(function(index,item){
+                var u=$(this).text().split('：')[0].toString().replace("回复","")
+                var thisComment=$(this);
+                if(u)
+                {
+                    $.getJSON("https://passport.csdn.net/get/nick?callback=?", {users: u}, function(a) {
+                        if(a!=null&&a.data!=null&&a.data.length>0)
+                        {
+                            nick=a.data[0].n; 
+                            if(u!=nick)
+                            {
+                                thisComment.text(thisComment.text().replace(u,nick));  
+                            }
+                        }       
+                    });  
+                }
+            });         
+
+        },200);  
+
+        setTimeout(function(){
+            $(".math").each(function(index,value){$(this).find("span").last().css("color","#fff"); })
+        },5000);
+
+        setTimeout(function(){
+            $(".math").each(function(index,value){$(this).find("span").last().css("color","#fff"); })
+        },10000);
+
+        setTimeout(function(){
+            $(".math").each(function(index,value){$(this).find("span").last().css("color","#fff"); })
+        },15000);
+        
+        setTimeout(function(){
+            $("a img[src='http://js.tongji.linezing.com/stats.gif']").parent().css({"position":"absolute","left":"50%"});
+        },300);
+    });
+
+    function loginbox(){
+        var $logpop=$("#pop_win");
+        $logpop.html('<iframe src="https://passport.csdn.net/account/loginbox?service=http://static.blog.csdn.net/callback.htm" frameborder="0" height="600" width="400" scrolling="no"></iframe>');
+
+        $('#popup_mask').css({
+            opacity: 0.5,
+            width: $( document ).width() + 'px',
+            height:  $( document ).height() + 'px'
+        });
+        $('#popup_mask').css("display","block");
+ 
+        $logpop.css( {
+            top: ($( window ).height() - $logpop.height())/ 2  + $( window 
+       ).scrollTop() + 'px',
+            left:($( window ).width() - $logpop.width())/ 2
+        } );
+ 
+        setTimeout( function () {
+            $logpop.show();
+            $logpop.css( {
+                opacity: 1
+            } );
+        }, 200 );
+ 
+        $('#popup_mask').unbind("click");
+        $('#popup_mask').bind("click", function(){
+            $('#popup_mask').hide();
+            var $clopop = $("#pop_win");
+            $("#common_ask_div_sc").css("display","none");
+            $clopop.css( {
+                opacity: 0
+            } );
+            setTimeout( function () {
+                $clopop.hide();
+            }, 350 );
+            return false;
+        });
+    }   
+
+    var articletitle='Linux网络编程——多播';
+
+</script>
+
+
+
+
+
+
+
+
+
+
+                        <div class="clear">
+                        </div>
+                    </div>                   
+                
+            </div>
+                   
+           <div id="side">
+               
+    <div class="side">
+
+
+<div id="custom_column_40609049" class="panel">
+<ul class="panel_head"><span>本人录制的视频资源</span></ul>
+<ul class="panel_body">
+<b>相关教程视频（持续更新）：</b> <br>
+<a href="http://pan.baidu.com/s/1qXAP4x2" target="_blank">1. C语言入门学习</a><br>
+<a href="http://pan.baidu.com/s/1pLRZIuJ" target="_blank">2. C语言实现的贪吃蛇</a><br>
+<a href="http://pan.baidu.com/s/1bEaK6E" target="_blank">3. C提高</a><br>
+<a href="http://pan.baidu.com/s/1o8HS0uI" target="_blank">4. Qt图形界面编程</a><br>
+<a href="http://pan.baidu.com/s/1nvbWVix" target="_blank">5. Qt版黑白棋</a><br>
+<a href="http://pan.baidu.com/s/1kUQ5K1L" target="_blank">6. 原始套接字编程</a><br>
+<a href="http://pan.baidu.com/s/1pLC1hb1" target="_blank">7. protobuf的使用</a><br>
+<a href="http://pan.baidu.com/s/1eRHTS1W" target="_blank">8. C++11新特性学习</a><br>
+</ul>
+</div><div id="panel_Profile" class="panel">
+<ul class="panel_head"><span>个人资料</span></ul>
+<ul class="panel_body profile">
+<div id="blog_userface">
+    <a href="http://my.csdn.net/tennysonsky" target="_blank">
+    <img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/1_tennysonsky.jpg" title="访问我的空间" style="max-width:90%">
+    </a>
+    <br>
+    <span><a href="http://my.csdn.net/tennysonsky" class="user_name" target="_blank">Mike__Jiang</a></span>
+</div>
+<div class="interact">
+
+    <a href="javascript:void(0);" class="attent" id="span_add_follow" title="[加关注]"></a>
+
+ <a href="javascript:void(0);" class="letter" title="[发私信]" onclick="window.open(&#39;http://msg.csdn.net/letters/model?receiver=tennysonsky&#39;,&#39;_blank&#39;,&#39;height=350,width=700&#39;);_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_sixin&#39;])"></a>  
+</div>
+<div id="blog_medal">
+                       <div class="ico_expert" onclick="javascript:location=&#39;http://blog.csdn.net/experts/rule.html&#39;" title="CSDN认证专家" style="cursor:pointer;width:60px;height:60px;background:url(&#39;http://c.csdnimg.cn/jifen/images/xunzhang/xunzhang/bokezhuanjiamiddle.png&#39;) no-repeat"></div>
+                <div id="bms_box">
+                                            <a target="_blank">
+                                                    <img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/zhuanlandaren.png" onmouseover="m_over_m(this,2)" onmouseout="m_out_m()" alt="3">
+                                            </a>
+                                            <a target="_blank">
+                                                    <img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/chizhiyiheng.png" onmouseover="m_over_m(this,4)" onmouseout="m_out_m()" alt="4">
+                                            </a>
+               </div>
+</div>
+<ul id="blog_rank">
+    <li>访问：<span>525804次</span></li>
+    <li>积分：<span>9414</span> </li>    
+    <li>等级： <span style="position:relative;display:inline-block;z-index:1">
+            <img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/blog6.png" alt="" style="vertical-align: middle;" id="leveImg">
+            <div id="smallTittle" style=" position: absolute;  left: -24px;  top: 25px;  text-align: center;  width: 101px;  height: 32px;  background-color: #fff;  line-height: 32px;  border: 2px #DDDDDD solid;  box-shadow: 0px 2px 2px rgba (0,0,0,0.1);  display: none;   z-index: 999;">
+            <div style="left: 42%;  top: -8px;  position: absolute;  width: 0;  height: 0;  border-left: 10px solid transparent;  border-right: 10px solid transparent;  border-bottom: 8px solid #EAEAEA;"></div>
+            积分：9414 </div>
+        </span>  </li>
+    <li>排名：<span>第2061名</span></li>
+</ul>
+<ul id="blog_statistics">
+    <li>原创：<span>239篇</span></li>
+    <li>转载：<span>68篇</span></li>
+    <li>译文：<span>9篇</span></li>
+    <li>评论：<span>265条</span></li>
+</ul>
+</ul>
+</div>
+
+
+
+
+<div id="custom_column_40524943" class="panel">
+<ul class="panel_body">
+<iframe width="100%" height="550" class="share_self" frameborder="0" scrolling="no" src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/index.html"></iframe>
+</ul>
+</div>
+
+<div id="custom_column_38455813" class="panel">
+<ul class="panel_head"><span>相关声明</span></ul>
+<ul class="panel_body">
+<b>作者：</b> <br>
+<a href="http://blog.csdn.net/tennysonsky" target="_blank">Mike Jiang</a> <br>
+<br>
+<b>出处：</b> <br>
+<a href="http://blog.csdn.net/tennysonsky" target="_blank">http://blog.csdn.net/tennysonsky</a><br>
+<br>
+<b>邮箱：</b><br>
+<a href="mailto:mikejiangsky@foxmail.com">mikejiangsky@foxmail.com</a><br>
+<br>
+<label style="color:blue">本博客文章，大多是本人整理编写，或在网络中收集，转载请注明出处！！</label> <br>
+<br>
+</ul>
+</div><div class="panel" id="panel_Search">
+    <ul class="panel_head"><span>文章搜索</span></ul>
+    <ul class="panel_body">
+        <form id="frmSearch" action="http://so.csdn.net/search" class="form_search csdn-tracking-statistics" target="_blank" data-mod="popu_306">
+        <span><input id="inputSearch" type="text" class="blogsearch" title="请输入关键字"></span>
+        <input id="btnSubmit" type="button" value="搜索" title="search in blog">
+        <input type="hidden" name="q" id="inputQ">
+        <input type="hidden" name="t" value="blog">
+        <a id="btnSearchBlog" target="_blank"></a>
+        </form>
+    </ul>
+</div>
+
+<script type="text/javascript">
+
+   
+    $(function () {
+        $("#btnSubmit").unbind("click");
+        $("#btnSubmit").click(function () {           
+            search();
+        });
+
+        $("#frmSearch").submit(function () {           
+            search();
+            return false;
+        });
+
+        function search()
+        {
+            if ($("#inputSearch").val() == "") {               
+                alert("请录入搜索关键词！");                         
+                return false;
+            }
+            //var url = "http://so.csdn.net/so/search/s.do?q=" + encodeURIComponent($("#inputSearch").val()) + "&u=" + username + "&t=blog";           
+            var url = "https://www.baidu.com/s?wd=" + encodeURIComponent($("#inputSearch").val()) + "%20site%3Ablog.csdn.net"
+            window.location.href = url;
+        }   
+    });
+</script><div id="panel_Category" class="panel">
+    <ul class="panel_head"><span>博客专栏</span></ul>
+    <ul class="panel_body" id="sp_column">
+    <table cellpadding="0" cellspacing="0"><tbody><tr>
+    <td style="padding:10px 10px 0 0;">
+    <a href="http://blog.csdn.net/column/details/15161.html" target="_blank"><img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/20170406152344196" style="width:75px;height:75px;"></a>
+    </td>
+    <td style="padding:10px 0; vertical-align:top;">
+    <a href="http://blog.csdn.net/column/details/15161.html" target="_blank">C语言</a>
+    <p>文章：16篇</p>
+    <span>阅读：24225</span>
+    </td>
+    </tr></tbody></table>
+    <table cellpadding="0" cellspacing="0"><tbody><tr>
+    <td style="padding:10px 10px 0 0;">
+    <a href="http://blog.csdn.net/column/details/tennysonsky-linux.html" target="_blank"><img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/20151123180325349" style="width:75px;height:75px;"></a>
+    </td>
+    <td style="padding:10px 0; vertical-align:top;">
+    <a href="http://blog.csdn.net/column/details/tennysonsky-linux.html" target="_blank">Linux环境编程</a>
+    <p>文章：3篇</p>
+    <span>阅读：13116</span>
+    </td>
+    </tr></tbody></table>
+    <table cellpadding="0" cellspacing="0"><tbody><tr>
+    <td style="padding:10px 10px 0 0;">
+    <a href="http://blog.csdn.net/column/details/tennysonsky.html" target="_blank"><img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/20151123180225239" style="width:75px;height:75px;"></a>
+    </td>
+    <td style="padding:10px 0; vertical-align:top;">
+    <a href="http://blog.csdn.net/column/details/tennysonsky.html" target="_blank">一步步学习C++</a>
+    <p>文章：27篇</p>
+    <span>阅读：41116</span>
+    </td>
+    </tr></tbody></table>
+    </ul>
+</div><div id="panel_Category" class="panel">
+<ul class="panel_head"><span>文章分类</span></ul>
+<ul class="panel_body">    
+                 <li>
+                    <a href="http://blog.csdn.net/tennysonsky/article/category/1297698" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_wenzhangfenlei&#39;]); ">【C/C++】</a><span>(79)</span>
+                </li>
+                 <li>
+                    <a href="http://blog.csdn.net/tennysonsky/article/category/2835071" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_wenzhangfenlei&#39;]); ">【Linux环境编程】</a><span>(72)</span>
+                </li>
+                 <li>
+                    <a href="http://blog.csdn.net/tennysonsky/article/category/2835083" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_wenzhangfenlei&#39;]); ">【Linux网络编程】</a><span>(47)</span>
+                </li>
+                 <li>
+                    <a href="http://blog.csdn.net/tennysonsky/article/category/1438449" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_wenzhangfenlei&#39;]); ">【图形界面编程】</a><span>(58)</span>
+                </li>
+                 <li>
+                    <a href="http://blog.csdn.net/tennysonsky/article/category/2835079" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_wenzhangfenlei&#39;]); ">【web编程】</a><span>(12)</span>
+                </li>
+                 <li>
+                    <a href="http://blog.csdn.net/tennysonsky/article/category/2835081" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_wenzhangfenlei&#39;]); ">【数据库】</a><span>(7)</span>
+                </li>
+                 <li>
+                    <a href="http://blog.csdn.net/tennysonsky/article/category/3065271" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_wenzhangfenlei&#39;]); ">【Android】</a><span>(3)</span>
+                </li>
+                 <li>
+                    <a href="http://blog.csdn.net/tennysonsky/article/category/2835069" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_wenzhangfenlei&#39;]); ">【Windows】</a><span>(9)</span>
+                </li>
+                 <li>
+                    <a href="http://blog.csdn.net/tennysonsky/article/category/3243391" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_wenzhangfenlei&#39;]); ">【软件工具使用】</a><span>(16)</span>
+                </li>
+                 <li>
+                    <a href="http://blog.csdn.net/tennysonsky/article/category/2883711" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_wenzhangfenlei&#39;]); ">【杂谈】</a><span>(39)</span>
+                </li>
+                 <li>
+                    <a href="http://blog.csdn.net/tennysonsky/article/category/3099017" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_wenzhangfenlei&#39;]); ">【生活速递】</a><span>(5)</span>
+                </li>
+                 <li>
+                    <a href="http://blog.csdn.net/tennysonsky/article/category/6546051" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_wenzhangfenlei&#39;]); ">【分布式系统】</a><span>(3)</span>
+                </li>
+                 <li>
+                    <a href="http://blog.csdn.net/tennysonsky/article/category/6604971" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_wenzhangfenlei&#39;]); ">【Nginx】</a><span>(2)</span>
+                </li>
+                 <li>
+                    <a href="http://blog.csdn.net/tennysonsky/article/category/6838077" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_wenzhangfenlei&#39;]); ">【读书摘录】</a><span>(5)</span>
+                </li>
+                 <li>
+                    <a href="http://blog.csdn.net/tennysonsky/article/category/7131256" onclick="_gaq.push([&#39;_trackEvent&#39;,&#39;function&#39;, &#39;onclick&#39;, &#39;blog_articles_wenzhangfenlei&#39;]); ">【Go语言】</a><span>(14)</span>
+                </li>
+</ul>
+</div><div id="newcomments" class="panel">
+<ul class="panel_head"><span>最新评论</span></ul>
+<ul class="panel_body itemlist">
+    <li>
+   
+         <a href="http://blog.csdn.net/tennysonsky/article/details/48030333#comments">Qt入门学习——Qt Creator 中 ui 文件和 Qt 代码关系</a>
+    <p style="margin:0px;"><a href="http://blog.csdn.net/d137578736" class="user_name">清风弥天</a>:
+楼主答得很好！我思考了半天，猜测的结果和你说的一样！~还没你说的全！
+    </p>
+    </li>
+    <li>
+   
+         <a href="http://blog.csdn.net/tennysonsky/article/details/45671215#comments">Linux 网络编程——并发服务器的三种实现模型</a>
+    <p style="margin:0px;"><a href="http://blog.csdn.net/suikegui007" class="user_name">光阴的故事007</a>:
+博主好　多线程模型中如果accept()函数出错的时候continue之前用不用解开锁呢？？
+    </p>
+    </li>
+    <li>
+   
+         <a href="http://blog.csdn.net/tennysonsky/article/details/46490099#comments">Linux系统编程——线程池</a>
+    <p style="margin:0px;"><a href="http://blog.csdn.net/suikegui007" class="user_name">光阴的故事007</a>:
+多谢博主的分享
+    </p>
+    </li>
+    <li>
+   
+         <a href="http://blog.csdn.net/tennysonsky/article/details/46485735#comments">Linux系统编程——线程同步与互斥：读写锁</a>
+    <p style="margin:0px;"><a href="http://blog.csdn.net/qq_40273354" class="user_name">HicerWu</a>:
+@gonghuiyun19910610:这个小妹妹总是纠结运行顺序，建议多看看系统调度问题
+    </p>
+    </li>
+    <li>
+   
+         <a href="http://blog.csdn.net/tennysonsky/article/details/46438525#comments">Linux系统编程——多线程实现多任务</a>
+    <p style="margin:0px;"><a href="http://blog.csdn.net/qq_40273354" class="user_name">HicerWu</a>:
+示列二：pthread_create(&amp;amp;tid,&amp;#160;NULL,&amp;#160;threa...
+    </p>
+    </li>
+    <li>
+   
+         <a href="http://blog.csdn.net/tennysonsky/article/details/46046317#comments">Linux系统编程——进程和线程的区别与联系</a>
+    <p style="margin:0px;"><a href="http://blog.csdn.net/qq_40273354" class="user_name">HicerWu</a>:
+6666 通俗易懂
+    </p>
+    </li>
+    <li>
+   
+         <a href="http://blog.csdn.net/tennysonsky/article/details/44493407#comments">Linux网络编程——多播</a>
+    <p style="margin:0px;"><a href="http://blog.csdn.net/qq_18119663" class="user_name">qq_18119663</a>:
+佩服
+    </p>
+    </li>
+    <li>
+   
+         <a href="http://blog.csdn.net/tennysonsky/article/details/45917409#comments">Linux系统编程——进程的控制：结束进程、等待进程结束</a>
+    <p style="margin:0px;"><a href="http://blog.csdn.net/qq_40273354" class="user_name">HicerWu</a>:
+赞！
+    </p>
+    </li>
+    <li>
+   
+         <a href="http://blog.csdn.net/tennysonsky/article/details/74474788#comments">学校的作用</a>
+    <p style="margin:0px;"><a href="http://blog.csdn.net/yongheng0852" class="user_name">永恒0852</a>:
+前几天刚听到这里！
+    </p>
+    </li>
+    <li>
+   
+         <a href="http://blog.csdn.net/tennysonsky/article/details/44239133#comments">Linux网络编程——网络协议入门</a>
+    <p style="margin:0px;"><a href="http://blog.csdn.net/rbmwjyc" class="user_name">c01cpp</a>:
+IP数据包放入以太网数据包，那么每次被接受者收到的时候，他都要先解包以太网数据包，再解包IP数据包才...
+    </p>
+    </li>
+</ul>
+</div>
+    </div>
+    <div class="clear">
+    </div>
+
+
+           </div>   
+            <div class="clear">
+            </div>
+        </div>
+
+        
+
+
+
+
+
+
+
+
+    <script type="text/javascript" src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/login.js"></script>
+<script type="text/javascript">
+    $(function () {
+        function __get_code_toolbar(snippet_id) {
+            return $("<span class='tracking-ad' data-mod='popu_167'><a href='https://code.csdn.net/snippets/"
+                    + snippet_id
+                    + "' target='_blank' title='在CODE上查看代码片'  style='text-indent:0;'><img src='https://code.csdn.net/assets/CODE_ico.png' width=12 height=12 alt='在CODE上查看代码片' style='position:relative;top:1px;left:2px;'/></a></span>"
+                    + "<span class='tracking-ad' data-mod='popu_170'><a href='https://code.csdn.net/snippets/"
+                    + snippet_id
+                    + "/fork' target='_blank' title='派生到我的代码片' style='text-indent:0;'><img src='https://code.csdn.net/assets/ico_fork.svg' width=12 height=12 alt='派生到我的代码片' style='position:relative;top:2px;left:2px;'/></a></span>");
+        }
+        
+        $("[code_snippet_id]").each(function () {
+            __s_id = $(this).attr("code_snippet_id");
+            if (__s_id != null && __s_id != "" && __s_id != 0 && parseInt(__s_id) > 70020) {
+                __code_tool = __get_code_toolbar(__s_id);
+                $(this).prev().find(".tools").append(__code_tool);
+            }
+        });
+
+        $(".bar").show();
+    });
+</script>
+
+
+
+
+
+    </div>
+     
+
+
+       <script type="text/javascript" src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/MathJax.js"></script>   
+    
+    <script src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/csdn_blog_detail.min.js" type="text/javascript"></script><link rel="stylesheet" type="text/css" href="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/pub_footer_2014.css"><div class="pub_fo"><div id="pub_footerall" class="pub_footer_new"><dl><dt></dt> <dd class="foot_sub_menu"><a href="http://www.csdn.net/company/about.html" target="_blank">公司简介</a><span>|</span><a href="http://www.csdn.net/company/recruit.html" target="_blank">招贤纳士</a><span>|</span><a href="http://www.csdn.net/company/marketing.html" target="_blank">广告服务</a><span>|</span><a href="http://www.csdn.net/company/contact.html" target="_blank">联系方式</a><span>|</span><a href="http://www.csdn.net/company/statement.html" target="_blank">版权声明</a><span>|</span><a href="http://www.csdn.net/company/layer.html" target="_blank">法律顾问</a><span>|</span><a href="mailto:webmaster@csdn.net">问题报告</a><span>|</span><a target="_blank" href="http://www.csdn.net/friendlink.html">合作伙伴</a><span>|</span><a href="http://bbs.csdn.net/forums/Service" target="_blank">论坛反馈</a></dd><dd class="foot_contact"><a href="javascript:void(0);" target="_blank" class="qq">网站客服</a><a href="http://wpa.qq.com/msgrd?v=3&amp;uin=2251809102&amp;site=qq&amp;menu=yes" target="_blank" class="qq">杂志客服</a><a href="http://e.weibo.com/csdnsupport/profile" target="_blank" class="weibo">微博客服</a><a href="mailto:webmaster@csdn.net" class="email" title="联系邮箱">webmaster@csdn.net</a><span class="phone" title="服务热线">400-660-0108</span><span class="interval">|</span><span>北京创新乐知信息技术有限公司 版权所有</span><span class="interval">|</span><span>江苏知之为计算机有限公司</span><span class="interval">|</span><span>江苏乐知网络技术有限公司</span></dd><dd class="foot_copyright"><span>京&nbsp;ICP&nbsp;证&nbsp;09002463&nbsp;号</span><span class="interval">|</span><span>Copyright © 1999-2017, CSDN.NET, All Rights Reserved&nbsp;</span><a href="http://www.hd315.gov.cn/beian/view.asp?bianhao=010202001032100010" target="_blank"><img src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/gongshang_logos.gif" alt="GongshangLogo" title=""></a></dd></dl></div></div><div id="note1" class="csdn_note" style="display:none; position:absolute; z-index:9999; width:440px">  <span class="notice_top_arrow"><span class="inner"></span></span>  <div class="box"></div></div><div class="csdn_notice_tip" style="display:none; position:absolute; z-index:9990; width:170px">  <iframe src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/saved_resource(2).html" frameborder="0" scrolling="no" style="z-index:-1;position:absolute;top:0;left:0;width:100%;height:100%;background:transparent"></iframe>  <div class="tip_text">您有<strong>0</strong>条新通知</div>  <a href="javascript:void 0" class="close2"></a></div><script id="noticeScript" type="text/javascript" btnid="header_notice_num" wrapid="note1" count="5" subcount="5" src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/notify.js"></script><input type="hidden" id="aa_g_data_ids">
+        
+    <script type="text/javascript" src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/csdn_public_blog_detail.min.js"></script>
+
+    <script type="text/javascript" src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/showblogmedal.ashx"></script>
+
+
+  <div id="a52b5334d" style="width: 1px; height: 1px; display: none;">
+                    <script id="adJs52b5334" src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/52b5334.js"></script>
+                    <script>document.getElementById("adJs52b5334").src = "http://ads.csdn.net/js/opt/52b5334.js?t=" + Math.random();</script>
+   <div><iframe src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/skip.html" style="width: 1px; height: 1px; position: absolute; visibility: hidden;"></iframe></div><div><iframe src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/skip(1).html" style="width: 1px; height: 1px; position: absolute; visibility: hidden;"></iframe></div></div>
+          
+    <div class="pop_CA_cover" style="display:none"></div>
+    <div class="pop pop_CA" style="display:none">
+          <div class="CA_header">
+            收藏助手
+            <span class="cancel_icon" id="fapancle" onclick="$(&#39;.pop_CA&#39;).hide();$(&#39;.pop_CA_cover&#39;).hide();"></span>
+          </div>
+          <iframe src="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/saved_resource(3).html" id="fa" frameborder="0" width="100%" height="360" scrolling="no"></iframe>
+    </div>
+
+
+        <script type="text/javascript">
+
+            $(function () {
+                var fromjs = $("#fromjs");
+                if (fromjs.length > 0) {
+                    $("#fromjs .markdown_views pre").addClass("prettyprint");
+                    prettyPrint();
+
+                    $('pre.prettyprint code').each(function () {
+                        var lines = $(this).text().split('\n').length;
+                        var $numbering = $('<ul/>').addClass('pre-numbering').hide();
+                        $(this).addClass('has-numbering').parent().append($numbering);
+                        for (i = 1; i <= lines; i++) {
+                            $numbering.append($('<li/>').text(i));
+                        };
+                        $numbering.fadeIn(1700);
+                    });
+
+                    $('.pre-numbering li').css("color", "#999");
+                }
+            });
+
+            $(".markdown_views a[target!='_blank']").attr("target", "_blank");
+
+            //$(".toc a[target='_blank']").attr("target", "");
+
+            setTimeout(function () {
+                $(".toc a[target='_blank']").attr("target", "");
+            }, 500);
+
+        </script>
+
+
+   
+<div id="mask_code"></div><div class="gist_edit"><div class="save_snippets clearfix"><div class="tit"><h3>保存代码片</h3><span>整理和分享保存的代码片，请访问<a href="https://code.csdn.net/snippets_manage" target="_blank">代码笔记</a></span></div><div class="con_form"><ul class="gist_edit_list clearfix"><li><span class="red">*</span><span class="txt">标题</span><input id="form_title" class="form-input" placeholder="Linux网络编程——多播" type="text"></li><li><span class="red">*</span><span class="txt">描述</span><textarea id="form-textarea" class="form-textarea" placeholder="Linux网络编程——多播： http://blog.csdn.net/tennysonsky/article/details/44493407"></textarea></li><li><span class="red">&nbsp;</span><span class="txt">标签</span><div id="divSearchTags"><span class="label blog_tag"><span>网络编程</span><a title="Removing tag" href="javascript:;">x</a></span><span class="label blog_tag"><span>多播</span><a title="Removing tag" href="javascript:;">x</a></span><span class="label blog_tag"><span>socket</span><a title="Removing tag" href="javascript:;">x</a></span><input id="insertTag" class="insertTag" placeholder="请输入标签，按Enter生成(最多5项)" type="text" value="" name="insertTag" maxlength="21" style="color: rgb(51, 51, 51);"><input id="OrganTag" class="OrganTag" type="hidden" name="OrganTag" value="网络编程,多播,socket,"><input id="OldOrganTag" class="OldOrganTag" type="hidden" name="OldOrganTag" value=""><input type="hidden" name="txtSearchTags"></div></li></ul></div><div class="bottom-bar"><a href="javascript:;" class="btn-submit btn-cancel">取消</a><span class="tracking-ad" data-mod="popu_250"><a class="btn-submit btn-confirm" href="javascript:;" target="_blank">确定</a></span></div></div></div><link rel="stylesheet" type="text/css" media="screen" href="./Linux网络编程——多播 - 秋叶原 &amp;&amp; Mike __ 麦克 - CSDN博客_files/ask_float_fonts_css-6b30a53970eb5c3a2a045e3df585b475.css"><div data-mod="popu_64" class="csdn-tracking-statistics" chg-blk="0"><a id="com-quick-QRcode" class="QRcodebg1" title="扫描二维码" style="top:179px"><span class="closeQR"></span></a><a id="com-quick-reply" title="快速回复" style="top:313px"></a><a id="com-quick-collect" title="我要收藏" style="top:351px"></a><a id="com-d-top-a" style="top: 389px; display: block;" title="返回顶部" onclick=""></a></div><div class="pop_edit ask_second comm_ask_second"><h3>提问</h3><span class="ask_float_span">您的问题将会被发布在“<a class="ask_float_channel" href="http://ask.csdn.net/" target="_blank" style="cursor:pointer">技术问答</a>”频道</span><a href="http://blog.csdn.net/tennysonsky/article/details/44493407#" nodetype="close" class="close">×</a><div class="context"><div class="err_div"><span class="err_ico"></span><span class="err_txt">该问题已存在，请勿重复提问</span></div><div class="input_div"><input id="askInputSecond" type="text" style="font-size:14px;" placeholder="问题标题"></div><div class="cm_box"><div class="cm_dialog"></div> <div class="pop_cm cm_add_link"><input type="text" placeholder="链接内容" id="af_cm_link_txt"><input type="text" placeholder="链接地址" id="af_cm_link_url"><input type="text" placeholder="链接提示" id="af_cm_link_tit"><div class="text-right"><span class="btn btn-default btn-sm" id="add_link_btn">插入链接</span> </div> </div><div class="pop_cm cm_add_img"><div class="nav-tabs"><a class="img_tab active" href="http://blog.csdn.net/tennysonsky/article/details/44493407#tab_upload">本地上传</a><a class="img_tab" href="http://blog.csdn.net/tennysonsky/article/details/44493407#tab_weburl">网络图片</a></div><div class="tab_panel active" id="tab_upload"><div class="set_img"></div></div><div class="tab_panel" id="tab_weburl"><input type="text" placeholder="图片地址" id="af_cm_img_url"><input type="text" placeholder="图片说明" id="af_cm_img_alt"><div class="text-right"><span class="btn btn-default btn-sm" id="add_img_btn">插入图片</span> </div></div> </div></div> <textarea id="editor_all" rows="8" style="display: none;"></textarea><div class="editor-toolbar"><i class="separator">|</i><a class="icon-headline" title="标题一（Ctrl+Alt+1）"></a><a class="icon-heading" title="标题二（Ctrl+Alt+2）"></a><a class="icon-bold" title="粗体（Ctrl+B）"></a><a class="icon-italic" title="斜体（Ctrl+I）"></a><i class="separator">|</i><a class="icon-quote-left" title="引用（Ctrl+’）"></a><a class="icon-code" title="插入代码片（Ctrl+,）"></a><a class="icon-list-ul" title="无序列表（Ctrl+L）"></a><a class="icon-list-ol" title="有序列表（Ctrl+Alt+L）"></a><i class="separator">|</i><a class="icon-link" title="添加链接（Ctrl+K）"></a><a class="icon-picture" title="添加图片（Ctrl+Alt+I）"></a><i class="separator">|</i><a class="icon-reply" title="撤退（Ctrl+Z）"></a><a class="icon-share-alt" title="前进（Ctrl+Shift+Z）"></a><i class="separator">|</i><a class="icon-info" href="http://ask.csdn.net/pages/markdown" target="_blank" title="markdown语法参考"></a><a class="icon-preview" title="预览"></a><i class="separator">|</i></div><div class="CodeMirror cm-s-paper CodeMirror-focused"><div style="overflow: hidden; position: relative; width: 3px; height: 0px;"><textarea autocorrect="off" autocapitalize="off" spellcheck="false" style="position: absolute; padding: 0px; width: 1000px; height: 1em; outline: none; font-size: 4px;" tabindex="0"></textarea></div><div class="CodeMirror-hscrollbar"><div style="height: 1px;"></div></div><div class="CodeMirror-vscrollbar"><div style="width: 1px;"></div></div><div class="CodeMirror-scrollbar-filler"></div><div class="CodeMirror-gutter-filler"></div><div class="CodeMirror-scroll" tabindex="-1"><div class="CodeMirror-sizer" style="min-width: 33px;"><div style="position: relative;"><div class="CodeMirror-lines"><div style="position: relative; outline: none;"><div class="CodeMirror-measure"><pre>&nbsp;<span style="display: inline-block; width: 1px; margin-right: -1px;">&nbsp;</span></pre></div><div style="position: relative; z-index: 1;"></div><div class="CodeMirror-code"></div><div class="CodeMirror-cursor" style="visibility: hidden;">&nbsp;</div><div class="CodeMirror-cursor CodeMirror-secondarycursor" style="visibility: hidden;">&nbsp;</div></div></div></div></div><div style="position: absolute; height: 30px; width: 1px;"></div><div class="CodeMirror-gutters" style="display: none;"></div></div></div><div class="editor-statusbar"><span class="lines">0</span><span class="words">0</span><span class="cursor">0:0</span></div><div class="div_tags clearfix"><div id="divSearchTags" class="tags_con"><input type="text"></div><input type="hidden" name="txtSearchTags"></div><div id="ask2_tagRecomm_div" class="drt_tagRecomm tracking-ad" data-mod="popu_73"><span class="drt_tit">推荐标签：</span></div></div><div class="success"><div class="left_area"><input id="chk_cb" type="checkbox"><span class="wyxs">我要悬赏</span><input id="cb_num" class="cb_num" readonly="true"><span class="phib_rii"><span> 币</span></span></div><a href="http://blog.csdn.net/tennysonsky/article/details/44493407#" nodetype="cancel" class="cancel">取消</a><a href="http://blog.csdn.net/tennysonsky/article/details/44493407#" nodetype="ok" class="ok">发布</a></div></div><div id="common_ask_div_sc" class="searchContainer"><div class="sTitle">可能存在类似的问题：</div><div class="sFooter"><a class="sFirstNewAsk">我想提一个新问题</a></div></div><div style="position:fixed; top:0; left:0; overflow:hidden;"><input style="position:absolute; left:-300px;" type="text" value="" id="focus_retriever" readonly="true"></div><div id="tag-suggest-pop">
+  <div class="relative">
+    <div class="close"></div>
+    <div class="content"></div>
+  </div>
+</div></body></html>

@@ -1,0 +1,88 @@
+http://www.cnblogs.com/Beta-TNT/p/4724015.html
+大规模IP地址黑名单高性能查询实现
+
+嗯……前阵子接了个活儿，需要做一个基于IP地址黑名单的分流网关。刚接到的时候心想iptables不就行了么，没想到一看客户给的IP黑名单规模……我擦……上亿个……
+
+黑名单到了这个规模，就不得不考虑下优化的问题了。要知道从0.0.0.0到255.255.255.255，IP地址总共也只有232个，约43亿，除去不可能用于实际的地址以及内网地址之后就更少了，只有几分之一。上亿个IP地址的黑名单已经达到实际可用IP地址的几分之一了，而且还要实现大流量高性能查询，实在是……
+
+最初打算是用redis来实现，而第一版程序也是这么实现的，不过可能是不熟悉redis，做出来的东西性能不够达标。
+
+然后我想到一个点子……
+
+技术需求如下：
+
+IP地址由4个字节构成，从0.0.0.0到255.255.255.255，每个IP地址在网关只有两种状态：在/不在黑名单里。上面已经说过，IP地址由4个字节构成。那么我只需要构建一个232规模的字节数组，完成全IP地址到本地内存空间的映射。每个字节只存0或者1，表示对应的IP地址是不是黑名单IP即可。这么做需要4GB的内存。
+
+进一步考虑，一个字节只存一个bool实在是太浪费，对这种映射关系稍做修改，每个IP地址对应到字节数组里一个字节的某个二进制位即可，这样就能把数据压缩到原先的八分之一，即512MB。这样32位的系统也可以胜任了（虽然提供的是64位系统）。
+
+使用数据库技术，绕不过去的是查询和排序之类耗时的工作，对于如此庞大的黑名单库（其规模已经达到全IP地址数的几分之一），这是主要的性能消耗。但如果将IP地址映射到本地内存空间，那么直接就省掉了这个最消耗性能的操作，直接就能查到这个IP在不在黑名单里了。
+
+好了，想法有了，实现起来也就是五分钟的事儿，我编写的版本如下（C实现，省略了由IP地址字符串转换成无符号32位整数的过程）：
+
+复制代码
+ 1 #include "stdio.h"
+ 2 #include "stdlib.h"
+ 3 #include "string.h"
+ 4 
+ 5 #define BLACKLIST_FILE "d:\\dummy_ip.bin"//一个512MB大小的随机内容的二进制文件
+ 6 
+ 7 char *test=new char[512*1024*1024];//IP地址映射到本地内存数据的数组
+ 8 int init();
+ 9 bool checkBlackList(unsigned long inputIP);
+10 void setValue(unsigned long inputIP, bool inputValue);
+11 
+12 //全IP段IP黑名单快速查询
+13 
+14 //原理：IP从0.0.0.0到255.255.255.255，总共2^32个IP地址。每个IP地址只有两个状态：在黑名单，或者不在
+15 //因此最初设计是申请0x00000000到0xFFFFFFFF个字节的内存空间（4GB），建立全IP地址到内存的映射，每个字节存放一个二进位，存储该地址对应IP是不是黑名单IP
+16 //经过压缩之后，每个字节存放8个二进制位，因此总空间可压缩到原先的八分之一，即512MB
+17 //查询时，将IP地址的四个字节合组成一个int32并右移3位，得到该IP对应的字节，然后用这个int32的低三位确定字节里的二进制位，即是否是黑名单IP
+18 //将IP转换成int32之后，单次查询仅需要1次内存直接访问和3次位操作
+19 //适用于IP黑名单很大的情况
+20 
+21 int main(int argc, char* argv[])
+22 {
+23     init();
+24     for(int i=0;i<100;++i)
+25     {    //生成随机的IP地址进行查询
+26         unsigned char a=rand()%256,b=rand()%256,c=rand()%256,d=rand()%256;
+27         unsigned long ip=a*b*c*d;
+28         printf("IP:%u.%u.%u.%u is hit:%d\n",a,b,c,d,checkBlackList(ip));
+29     }
+30     return 0;
+31 }
+32 
+33 //数据初始化，将保存在本地文件的数据读取到内存里
+34 int init()
+35 {
+36     FILE* fp = fopen(BLACKLIST_FILE,"r");
+37     if (fp==NULL)
+38         return 0;
+39     fgets(test,strlen(test),fp);
+40     fclose(fp);
+41     return 1;
+42 }
+43 
+44 //查询IP是否在黑名单里，仅仅需要三次位运算和一次内存访问
+45 bool checkBlackList(unsigned long inputIP)
+46 {
+47     return test[inputIP>>3] &(1<<(inputIP & (unsigned long)7));
+48 }
+49 
+50 //设置黑名单IP的值。找到IP对应的字节，然后使用掩码和位运算设置对应的二进制位的值
+51 void setValue(unsigned long inputIP, bool inputValue)
+52 {
+53     unsigned long byteIndex = inputIP >> 3;
+54     char maskByte = (char)(1<<(inputIP & (unsigned long)7));
+55     test[byteIndex] = (inputValue?(test[byteIndex] | maskByte):(test[byteIndex] & (!maskByte)));
+56     /*if(inputValue)//喜欢简洁，改成(:?)形式了，见上行
+57         test[byteIndex] = test[byteIndex] | maskByte;
+58     else
+59         test[byteIndex] = test[byteIndex] & (!maskByte);*/
+60 }
+
+嗯，跑起来可比之前的redis实现快了不是一星半点。
+
+others:
+http://blog.csdn.net/jeffleo/article/details/72824240
+
